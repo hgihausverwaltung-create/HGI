@@ -1,0 +1,182 @@
+:root {
+  color-scheme: light;
+  font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: #f4f5f7;
+  color: #1a1a1a;
+}
+
+.app-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-header {
+  background: #b3182c;
+  color: white;
+  padding: 0.75rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.app-header nav {
+  display: flex;
+  gap: 1.25rem;
+}
+
+.app-header a {
+  color: white;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.app-header a.active {
+  text-decoration: underline;
+}
+
+.app-main {
+  flex: 1;
+  padding: 1.5rem;
+  max-width: 1000px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.tile-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 1rem;
+}
+
+.tile {
+  background: white;
+  border-radius: 10px;
+  padding: 1.5rem 1rem;
+  text-align: center;
+  text-decoration: none;
+  color: #1a1a1a;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px dashed transparent;
+}
+
+.tile.new-tile {
+  border: 2px dashed #b3182c;
+  color: #b3182c;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+}
+
+.tile .badge {
+  display: inline-block;
+  margin-top: 0.5rem;
+  font-size: 0.7rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  background: #eee;
+}
+
+.badge.PUBLISHED {
+  background: #d7f3dd;
+  color: #1c6b32;
+}
+
+.badge.DRAFT {
+  background: #fdeecb;
+  color: #8a5a00;
+}
+
+.card {
+  background: white;
+  border-radius: 10px;
+  padding: 1.25rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  margin-bottom: 1rem;
+}
+
+form.stacked {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-width: 480px;
+}
+
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+input,
+select,
+textarea {
+  font: inherit;
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+textarea.schema-editor {
+  font-family: ui-monospace, monospace;
+  font-size: 0.85rem;
+  min-height: 420px;
+  width: 100%;
+}
+
+button {
+  font: inherit;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  border: none;
+  background: #b3182c;
+  color: white;
+  cursor: pointer;
+}
+
+button.secondary {
+  background: #e5e5e5;
+  color: #1a1a1a;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  text-align: left;
+  padding: 0.5rem;
+  border-bottom: 1px solid #eee;
+}
+
+.error-box {
+  background: #fdecea;
+  color: #a33;
+  padding: 0.75rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  white-space: pre-wrap;
+}
+
+.hint {
+  color: #666;
+  font-size: 0.85rem;
+}

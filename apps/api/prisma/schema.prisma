@@ -1,0 +1,219 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  FIELD_STAFF
+}
+
+enum PropertyKind {
+  WEG
+  MIETE
+  GEWERBE
+}
+
+enum TemplateVersionStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum DraftStatus {
+  DRAFT
+  PENDING_SEND
+  SENT
+  FAILED
+}
+
+enum AttachmentKind {
+  PHOTO
+  SIGNATURE
+}
+
+enum AttachmentUploadStatus {
+  PENDING
+  UPLOADED
+}
+
+enum SendLogStatus {
+  QUEUED
+  SENT
+  FAILED
+}
+
+/// Mitarbeiter. Modeled with a role field (not a fixed boolean) so future external
+/// roles (OWNER, TENANT for a later portal) extend this without a redesign.
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  role         Role     @default(FIELD_STAFF)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  publishedVersions TemplateVersion[] @relation("PublishedBy")
+  drafts            Draft[]           @relation("CreatedBy")
+  sendLogs          SendLog[]         @relation("SentBy")
+
+  @@map("users")
+}
+
+/// Objekt (Immobilie).
+model Property {
+  id           String       @id @default(uuid())
+  externalRef  String? // Platzhalter fuer spaetere WinCasa/idwell-Anbindung
+  name         String
+  street       String
+  houseNumber  String
+  postalCode   String
+  city         String
+  kind         PropertyKind @default(MIETE)
+  notes        String?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  units  Unit[]
+  drafts Draft[]
+
+  @@map("properties")
+}
+
+/// Wohnung / Einheit innerhalb eines Objekts.
+model Unit {
+  id          String   @id @default(uuid())
+  propertyId  String
+  externalRef String?
+  label       String // z.B. "WE 3, 2. OG rechts"
+  floor       String?
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  drafts   Draft[]
+
+  @@index([propertyId])
+  @@map("units")
+}
+
+/// Formularvorlage (die Kachel, z.B. "Übergabeprotokoll"). Der eigentliche Inhalt lebt
+/// versioniert in TemplateVersion.
+model Template {
+  id               String   @id @default(uuid())
+  key              String   @unique // slug, z.B. "uebergabeprotokoll"
+  name             String
+  description      String?
+  icon             String?
+  isArchived       Boolean  @default(false)
+  currentVersionId String?  @unique
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  versions       TemplateVersion[] @relation("TemplateVersions")
+  currentVersion TemplateVersion?  @relation("CurrentVersion", fields: [currentVersionId], references: [id])
+
+  @@map("templates")
+}
+
+/// Eine konkrete Version des Formular-Schemas. Einmal veröffentlicht (PUBLISHED) ist der
+/// Inhalt unveränderlich: bereits erstellte/gesendete Drafts bleiben so gültig, wie sie
+/// beim Ausfüllen aussahen, selbst wenn die Vorlage später weiterentwickelt wird.
+model TemplateVersion {
+  id            String                @id @default(uuid())
+  templateId    String
+  versionNumber Int
+  status        TemplateVersionStatus @default(DRAFT)
+  schema        Json // TemplateSchema aus @hgi/form-schema
+  publishedAt   DateTime?
+  publishedById String?
+  createdAt     DateTime              @default(now())
+  updatedAt     DateTime              @updatedAt
+
+  template      Template  @relation("TemplateVersions", fields: [templateId], references: [id], onDelete: Cascade)
+  currentOfTmpl Template? @relation("CurrentVersion")
+  publishedBy   User?     @relation("PublishedBy", fields: [publishedById], references: [id])
+  drafts        Draft[]
+
+  @@unique([templateId, versionNumber])
+  @@index([templateId])
+  @@map("template_versions")
+}
+
+/// Formularentwurf / Instanz. Bindet an eine bestimmte TemplateVersion, nicht an die
+/// Vorlage selbst, damit spätere Vorlagenänderungen bestehende Entwürfe nicht verändern.
+model Draft {
+  id                String      @id @default(uuid())
+  clientUuid        String      @unique // vom Gerät erzeugt, für Offline-Idempotenz
+  templateVersionId String
+  propertyId        String?
+  unitId            String?
+  title             String
+  status            DraftStatus @default(DRAFT)
+  answers           Json        @default("{\"values\":{},\"repeatables\":{}}")
+  createdById       String
+  version           Int         @default(1) // Zähler für Konflikterkennung beim Sync
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  syncedAt          DateTime?
+  sentAt            DateTime?
+
+  templateVersion TemplateVersion @relation(fields: [templateVersionId], references: [id])
+  property        Property?       @relation(fields: [propertyId], references: [id])
+  unit             Unit?          @relation(fields: [unitId], references: [id])
+  createdBy        User           @relation("CreatedBy", fields: [createdById], references: [id])
+  attachments      Attachment[]
+  sendLogs         SendLog[]
+
+  @@index([templateVersionId])
+  @@index([createdById])
+  @@index([status])
+  @@map("drafts")
+}
+
+/// Foto oder Unterschrift, angehängt an ein Feld eines Drafts.
+model Attachment {
+  id           String                 @id @default(uuid())
+  clientUuid   String                 @unique
+  draftId      String
+  fieldPath    String // z.B. "raeume.kueche.fotos"
+  kind         AttachmentKind
+  storageKey   String?
+  mimeType     String?
+  checksum     String?
+  uploadStatus AttachmentUploadStatus @default(PENDING)
+  capturedAt   DateTime               @default(now())
+  createdAt    DateTime               @default(now())
+
+  draft Draft @relation(fields: [draftId], references: [id], onDelete: Cascade)
+
+  @@index([draftId])
+  @@map("attachments")
+}
+
+/// Audit-Log jedes Sendevorgangs ("Senden"-Aktion).
+model SendLog {
+  id                String        @id @default(uuid())
+  draftId           String
+  recipients        Json // string[]
+  pdfStorageKey     String?
+  provider          String?
+  providerMessageId String?
+  status            SendLogStatus @default(QUEUED)
+  error             String?
+  sentById          String
+  sentAt            DateTime      @default(now())
+
+  draft  Draft @relation(fields: [draftId], references: [id])
+  sentBy User  @relation("SentBy", fields: [sentById], references: [id])
+
+  @@index([draftId])
+  @@map("send_logs")
+}
