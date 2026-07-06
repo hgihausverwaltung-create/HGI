@@ -26,6 +26,19 @@ enum ImportJobStatus {
   FAILED
 }
 
+enum AufgabeStatus {
+  OFFEN
+  IN_BEARBEITUNG
+  ERLEDIGT
+}
+
+enum AufgabePrioritaet {
+  NIEDRIG
+  MITTEL
+  HOCH
+  DRINGEND
+}
+
 model User {
   id           String   @id @default(uuid())
   email        String   @unique
@@ -35,6 +48,7 @@ model User {
   createdAt    DateTime @default(now())
 
   hochgeladeneDokumente Dokument[]
+  erstellteAufgaben     Aufgabe[]
 }
 
 model Objekt {
@@ -49,6 +63,7 @@ model Objekt {
 
   einheiten  Einheit[]
   dokumente  Dokument[]
+  aufgaben   Aufgabe[]
 }
 
 model Einheit {
@@ -141,10 +156,37 @@ model Dokument {
   hochgeladenAm    DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
 
+  aufgaben         Aufgabe[]
+
   @@index([kategorieId])
   @@index([objektId])
   @@index([dateiname])
   @@index([hochgeladenAm])
+}
+
+model Aufgabe {
+  id                String            @id @default(uuid())
+  titel             String
+  beschreibung      String?
+  status            AufgabeStatus     @default(OFFEN)
+  prioritaet        AufgabePrioritaet @default(MITTEL)
+  faelligkeitsdatum DateTime?
+
+  objektId          String?
+  objekt            Objekt?           @relation(fields: [objektId], references: [id], onDelete: SetNull)
+
+  dokumentId        String?
+  dokument          Dokument?         @relation(fields: [dokumentId], references: [id], onDelete: SetNull)
+
+  erstelltVonId     String
+  erstelltVon       User              @relation(fields: [erstelltVonId], references: [id])
+
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  @@index([objektId])
+  @@index([status])
+  @@index([faelligkeitsdatum])
 }
 
 model ImportJob {

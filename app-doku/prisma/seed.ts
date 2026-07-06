@@ -29,7 +29,7 @@ async function main() {
     },
   });
 
-  await prisma.objekt.upsert({
+  const objekt = await prisma.objekt.upsert({
     where: { externeId: "seed-objekt-1" },
     update: {},
     create: {
@@ -40,6 +40,39 @@ async function main() {
       externeId: "seed-objekt-1",
     },
   });
+
+  const testUser = await prisma.user.findUniqueOrThrow({ where: { email: testEmail } });
+
+  if ((await prisma.aufgabe.count()) === 0) {
+    const inZweiWochen = new Date();
+    inZweiWochen.setDate(inZweiWochen.getDate() + 14);
+
+    await prisma.aufgabe.createMany({
+      data: [
+        {
+          titel: "Heizungswartung beauftragen",
+          status: "OFFEN",
+          prioritaet: "HOCH",
+          objektId: objekt.id,
+          faelligkeitsdatum: inZweiWochen,
+          erstelltVonId: testUser.id,
+        },
+        {
+          titel: "Protokoll Eigentuemerversammlung verschicken",
+          status: "IN_BEARBEITUNG",
+          prioritaet: "MITTEL",
+          erstelltVonId: testUser.id,
+        },
+        {
+          titel: "Rechnung pruefen",
+          status: "ERLEDIGT",
+          prioritaet: "NIEDRIG",
+          objektId: objekt.id,
+          erstelltVonId: testUser.id,
+        },
+      ],
+    });
+  }
 
   console.log("Seed abgeschlossen. Testbenutzer: %s / test1234", testEmail);
 }
