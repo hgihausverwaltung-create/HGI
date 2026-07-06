@@ -20,7 +20,9 @@
   "dependencies": {
     "@hgi/domain": "workspace:*",
     "@hgi/form-schema": "workspace:*",
+    "@hgi/pdf": "workspace:*",
     "@fastify/cors": "^10.0.0",
+    "@fastify/multipart": "^9.0.1",
     "@prisma/client": "^5.22.0",
     "@trpc/server": "^10.45.2",
     "bcryptjs": "^2.4.3",

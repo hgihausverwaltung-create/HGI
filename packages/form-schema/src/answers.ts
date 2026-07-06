@@ -26,7 +26,7 @@ export interface ValidationResult {
   errors: string[];
 }
 
-function evaluateVisibleWhen(condition: VisibleWhen | undefined, values: Record<string, AnswerValue>): boolean {
+export function evaluateVisibleWhen(condition: VisibleWhen | undefined, values: Record<string, unknown>): boolean {
   if (!condition) return true;
   const actual = values[condition.fieldId];
   switch (condition.op) {

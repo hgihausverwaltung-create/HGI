@@ -15,9 +15,17 @@ Der vollständige Architekturplan steht in [`docs/executive-master-prompt.md`](d
 - **Datenmodell** (`apps/api/prisma/schema.prisma`): Objekte/Wohnungen, versionierte Formularvorlagen
   (veröffentlichte Versionen sind unveränderlich), Formularentwürfe, Anhänge, Sende-Protokoll.
 
-Aktueller Stand: **Meilenstein M1** (Fundament + Formular-Engine + Web-Admin) ist umgesetzt und
-end-to-end verifiziert. M2 (Web-Entwurf-Ausfüllen + PDF + Versand), M3 (Mobile), M4 (Offline-Sync) und
-M5 (echtes Übergabeprotokoll) folgen.
+Aktueller Stand: **Meilenstein M1** (Fundament + Formular-Engine + Web-Admin) und **M2** (Web-Entwurf
+ausfüllen, PDF-Erzeugung, Versand) sind umgesetzt und end-to-end verifiziert. M3 (Mobile), M4
+(Offline-Sync) und M5 (Feinschliff echtes Übergabeprotokoll) folgen.
+
+M2 ergänzt:
+- **`packages/form-renderer`**: teilt die React-Komponente, die ein Vorlagen-Schema in ein ausfüllbares
+  Formular rendert (inkl. Foto-Upload, Raum-Unterformulare), zwischen Web und später Mobile.
+- **`packages/pdf`**: rendert ein ausgefülltes Protokoll (Schema + Antworten + Fotos) als
+  HGI-gebrandetes PDF, inkl. Auflösung von Objekt-/Wohnungs-Referenzen zu lesbaren Namen.
+- **Entwurf-Workflow im Web** (`/templates/:id`, `/drafts/:id`): Übersicht/Entwürfe/Gesendet-Tabs wie in
+  smaps, Entwurf anlegen/ausfüllen/Foto hochladen/speichern/senden.
 
 ## Lokale Entwicklung
 
@@ -50,12 +58,18 @@ Test-Logins nach dem Seed:
 Der Seed legt außerdem ein Beispiel-Objekt/-Wohnung sowie die echte **Übergabeprotokoll**-Vorlage
 (inkl. der "Bestehend aus"-Raumliste aus den smaps-Screenshots) als veröffentlichte Version 1 an.
 
-## Hinweis zu Auth/Hosting in Produktion
+## Hinweis zu Auth/Storage/E-Mail in Produktion
 
 Für den produktiven Betrieb sieht der Architekturplan **Supabase** (Postgres, Auth, Storage, EU-Region)
-vor. In dieser lokalen Entwicklungsumgebung läuft stattdessen eine gewöhnliche PostgreSQL-Instanz mit
-einem eigenen, dazu kompatiblen E-Mail/Passwort-Login (`apps/api/src/lib/auth.ts`), da hierfür keine
-Cloud-Zugangsdaten benötigt werden. Der Wechsel auf Supabase Auth ist auf diese eine Datei begrenzt.
+sowie einen echten E-Mail-Anbieter (Resend/Postmark) vor. In dieser lokalen Entwicklungsumgebung laufen
+stattdessen kompatible, eigenständige Ersatz-Implementierungen, da hierfür keine Cloud-Zugangsdaten
+benötigt werden — jeweils auf eine Datei begrenzt, damit der spätere Wechsel isoliert bleibt:
+
+- **Auth**: eigenes E-Mail/Passwort-Login (`apps/api/src/lib/auth.ts`) statt Supabase Auth.
+- **Dateispeicher**: lokales Verzeichnis `apps/api/storage/files` (`apps/api/src/lib/storage.ts`) statt
+  Supabase Storage.
+- **E-Mail-Versand**: schreibt die "gesendete" E-Mail als JSON-Datei nach `apps/api/storage/outbox`
+  (`apps/api/src/lib/email.ts`) statt sie tatsächlich zu verschicken.
 
 ## Tests
 
