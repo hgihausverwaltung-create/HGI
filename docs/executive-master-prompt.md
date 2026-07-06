@@ -136,5 +136,11 @@ HGI Immobilien GmbH
 Hausverwaltung
 Osnabrücker Straße 49
 33649 Bielefeld
-Tel.: +49521 69342
+Tel.: +49 521 69342
+E-Mail: info@hgi-immobilien.de
+Web: www.hgi-immobilien.de
+
+Geschäftsführerin: Tatiana Schröder
+Amtsgericht Bielefeld, HRB 39722
+USt-IdNr.: [wird ergänzt]
 ```
