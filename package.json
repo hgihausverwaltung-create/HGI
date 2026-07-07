@@ -26,6 +26,23 @@
       "@prisma/engines",
       "esbuild",
       "prisma"
-    ]
+    ],
+    "packageExtensions": {
+      "@react-pdf/renderer": {
+        "dependencies": {
+          "@types/react": "18.3.31"
+        }
+      },
+      "react-router-dom": {
+        "dependencies": {
+          "@types/react": "18.3.31"
+        }
+      },
+      "react-router": {
+        "dependencies": {
+          "@types/react": "18.3.31"
+        }
+      }
+    }
   }
 }

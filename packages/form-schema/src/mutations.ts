@@ -1,4 +1,7 @@
-import type { AnswerValue, DraftAnswers } from "@hgi/form-schema";
+import type { AnswerValue, DraftAnswers } from "./answers";
+
+/** Pure helpers for updating a DraftAnswers value from a form UI — shared between the web
+ * and native form-renderer packages, neither of which should duplicate this logic. */
 
 export function setTopLevelValue(answers: DraftAnswers, fieldId: string, value: AnswerValue): DraftAnswers {
   return { ...answers, values: { ...answers.values, [fieldId]: value } };
