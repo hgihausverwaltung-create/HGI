@@ -26,6 +26,18 @@ enum ImportJobStatus {
   FAILED
 }
 
+enum KontaktTyp {
+  HANDWERKER
+  DIENSTLEISTER
+  BEIRAT
+}
+
+enum AnredeTyp {
+  HERR
+  FRAU
+  FIRMA
+}
+
 model User {
   id           String   @id @default(uuid())
   email        String   @unique
@@ -49,6 +61,7 @@ model Objekt {
 
   einheiten  Einheit[]
   dokumente  Dokument[]
+  kontakte   Kontakt[]
 }
 
 model Einheit {
@@ -68,12 +81,15 @@ model Einheit {
 }
 
 model Eigentuemer {
-  id        String   @id @default(uuid())
+  id        String     @id @default(uuid())
   name      String
+  anrede    AnredeTyp?
   email     String?
   telefon   String?
-  externeId String?  @unique
-  createdAt DateTime @default(now())
+  iban      String?
+  bankname  String?
+  externeId String?    @unique
+  createdAt DateTime   @default(now())
 
   einheiten EinheitEigentuemer[]
   dokumente Dokument[]
@@ -90,14 +106,15 @@ model EinheitEigentuemer {
 }
 
 model Mieter {
-  id        String   @id @default(uuid())
+  id        String     @id @default(uuid())
   name      String
+  anrede    AnredeTyp?
   email     String?
   telefon   String?
   einheitId String
-  einheit   Einheit  @relation(fields: [einheitId], references: [id], onDelete: Cascade)
-  externeId String?  @unique
-  createdAt DateTime @default(now())
+  einheit   Einheit    @relation(fields: [einheitId], references: [id], onDelete: Cascade)
+  externeId String?    @unique
+  createdAt DateTime   @default(now())
 
   dokumente Dokument[]
 
@@ -145,6 +162,22 @@ model Dokument {
   @@index([objektId])
   @@index([dateiname])
   @@index([hochgeladenAm])
+}
+
+model Kontakt {
+  id        String     @id @default(uuid())
+  name      String
+  typ       KontaktTyp
+  email     String?
+  telefon   String?
+
+  objektId  String?
+  objekt    Objekt?    @relation(fields: [objektId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime   @default(now())
+
+  @@index([objektId])
+  @@index([typ])
 }
 
 model ImportJob {

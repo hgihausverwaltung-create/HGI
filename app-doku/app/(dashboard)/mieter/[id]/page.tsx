@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
+import { ANREDE_LABELS } from "@/lib/validation/anrede";
 
 export default async function MieterDetailPage({
   params,
@@ -22,7 +23,10 @@ export default async function MieterDetailPage({
   return (
     <div className="flex flex-col gap-8">
       <div>
-        <h1 className="text-xl font-semibold text-zinc-900">{mieter.name}</h1>
+        <h1 className="text-xl font-semibold text-zinc-900">
+          {mieter.anrede ? `${ANREDE_LABELS[mieter.anrede]} ` : ""}
+          {mieter.name}
+        </h1>
         <p className="text-sm text-zinc-500">
           {mieter.email ?? "keine E-Mail"} {mieter.telefon ? `- ${mieter.telefon}` : ""}
         </p>

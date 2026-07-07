@@ -6,6 +6,7 @@ const NAV_ITEMS = [
   { href: "/objekte", label: "Objekte" },
   { href: "/eigentuemer", label: "Eigentuemer" },
   { href: "/mieter", label: "Mieter" },
+  { href: "/kontakte", label: "Kontakte" },
 ];
 
 export function Sidebar() {

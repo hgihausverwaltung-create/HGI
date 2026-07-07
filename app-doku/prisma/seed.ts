@@ -29,7 +29,7 @@ async function main() {
     },
   });
 
-  await prisma.objekt.upsert({
+  const objekt = await prisma.objekt.upsert({
     where: { externeId: "seed-objekt-1" },
     update: {},
     create: {
@@ -40,6 +40,29 @@ async function main() {
       externeId: "seed-objekt-1",
     },
   });
+
+  if ((await prisma.kontakt.count()) === 0) {
+    await prisma.kontakt.createMany({
+      data: [
+        {
+          name: "Mueller Sanitaer GmbH",
+          typ: "HANDWERKER",
+          telefon: "0521 1234567",
+          objektId: objekt.id,
+        },
+        {
+          name: "Gruen & Grau Hausmeisterservice",
+          typ: "DIENSTLEISTER",
+          email: "kontakt@gruengrau.de",
+        },
+        {
+          name: "Frau Schmidt (Beiratsvorsitz)",
+          typ: "BEIRAT",
+          objektId: objekt.id,
+        },
+      ],
+    });
+  }
 
   console.log("Seed abgeschlossen. Testbenutzer: %s / test1234", testEmail);
 }
