@@ -50,6 +50,12 @@ function formatTitleTimestamp(date: Date): string {
   return `${dd}.${mm}. ${hh}:${min}`;
 }
 
+const draftInclude = {
+  createdBy: { select: { id: true, name: true } },
+  attachments: true,
+  templateVersion: { include: { template: { select: { id: true, name: true } } } },
+} as const;
+
 export const draftsRouter = router({
   list: protectedProcedure
     .input(z.object({ templateId: z.string().uuid() }))
@@ -68,11 +74,22 @@ export const draftsRouter = router({
     .query(async ({ ctx, input }) => {
       const draft = await ctx.prisma.draft.findUnique({
         where: { id: input.id },
-        include: {
-          createdBy: { select: { id: true, name: true } },
-          attachments: true,
-          templateVersion: { include: { template: { select: { id: true, name: true } } } },
-        },
+        include: draftInclude,
+      });
+      if (!draft) throw new TRPCError({ code: "NOT_FOUND", message: "Entwurf nicht gefunden" });
+      return draft;
+    }),
+
+  /** Looked up by clientUuid rather than server id — the mobile offline store addresses
+   * drafts by the id it generated locally, since a freshly-created offline draft has no
+   * server id yet. */
+  getByClientUuid: protectedProcedure
+    .input(z.object({ clientUuid: z.string().uuid() }))
+    .output(draftDetailOutput)
+    .query(async ({ ctx, input }) => {
+      const draft = await ctx.prisma.draft.findUnique({
+        where: { clientUuid: input.clientUuid },
+        include: draftInclude,
       });
       if (!draft) throw new TRPCError({ code: "NOT_FOUND", message: "Entwurf nicht gefunden" });
       return draft;
@@ -98,11 +115,7 @@ export const draftsRouter = router({
           createdById: ctx.user.id,
           answers: { values: {}, repeatables: {} },
         },
-        include: {
-          createdBy: { select: { id: true, name: true } },
-          attachments: true,
-          templateVersion: { include: { template: { select: { id: true, name: true } } } },
-        },
+        include: draftInclude,
       });
       return draft;
     }),
@@ -135,11 +148,61 @@ export const draftsRouter = router({
           unitId: input.unitId,
           version: { increment: 1 },
         },
-        include: {
-          createdBy: { select: { id: true, name: true } },
-          attachments: true,
-          templateVersion: { include: { template: { select: { id: true, name: true } } } },
+        include: draftInclude,
+      });
+    }),
+
+  syncUpsert: protectedProcedure
+    .input(
+      z.object({
+        clientUuid: z.string().uuid(),
+        templateId: z.string().uuid(),
+        propertyId: z.string().uuid().optional(),
+        unitId: z.string().uuid().optional(),
+        answers: z.unknown(),
+        title: z.string().optional(),
+      }),
+    )
+    .output(draftDetailOutput)
+    .mutation(async ({ ctx, input }) => {
+      const parsedAnswers = draftAnswersSchema.safeParse(input.answers);
+      if (!parsedAnswers.success) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Ungültiges Antwortformat" });
+      }
+
+      const existing = await ctx.prisma.draft.findUnique({ where: { clientUuid: input.clientUuid } });
+      if (existing) {
+        if (existing.status === "SENT") {
+          return ctx.prisma.draft.findUniqueOrThrow({ where: { id: existing.id }, include: draftInclude });
+        }
+        return ctx.prisma.draft.update({
+          where: { id: existing.id },
+          data: {
+            answers: parsedAnswers.data,
+            propertyId: input.propertyId,
+            unitId: input.unitId,
+            version: { increment: 1 },
+          },
+          include: draftInclude,
+        });
+      }
+
+      const template = await ctx.prisma.template.findUnique({ where: { id: input.templateId } });
+      if (!template) throw new TRPCError({ code: "NOT_FOUND", message: "Vorlage nicht gefunden" });
+      if (!template.currentVersionId) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Vorlage hat keine veröffentlichte Version" });
+      }
+      return ctx.prisma.draft.create({
+        data: {
+          clientUuid: input.clientUuid,
+          templateVersionId: template.currentVersionId,
+          propertyId: input.propertyId,
+          unitId: input.unitId,
+          title: input.title ?? `${template.name} ${formatTitleTimestamp(new Date())}`,
+          createdById: ctx.user.id,
+          answers: parsedAnswers.data,
         },
+        include: draftInclude,
       });
     }),
 

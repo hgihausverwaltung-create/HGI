@@ -28,7 +28,7 @@ export async function registerFileRoutes(app: FastifyInstance) {
     if (!user) return reply.code(401).send({ error: "Anmeldung erforderlich" });
 
     const { fields, file } = await collectMultipart(req);
-    const { draftId, fieldPath, kind } = fields;
+    const { draftId, fieldPath, kind, clientUuid } = fields;
     if (!draftId || !fieldPath || !kind || !file) {
       return reply.code(400).send({ error: "draftId, fieldPath, kind und Datei sind erforderlich" });
     }
@@ -40,12 +40,17 @@ export async function registerFileRoutes(app: FastifyInstance) {
     if (!draft) return reply.code(404).send({ error: "Entwurf nicht gefunden" });
     if (draft.status === "SENT") return reply.code(400).send({ error: "Versendete Protokolle sind unveränderlich" });
 
+    if (clientUuid) {
+      const existing = await prisma.attachment.findUnique({ where: { clientUuid } });
+      if (existing) return reply.send({ attachment: existing });
+    }
+
     const extension = path.extname(file.filename).replace(".", "") || "bin";
     const storageKey = saveBuffer(file.buffer, extension);
 
     const attachment = await prisma.attachment.create({
       data: {
-        clientUuid: randomUUID(),
+        clientUuid: clientUuid ?? randomUUID(),
         draftId,
         fieldPath,
         kind,

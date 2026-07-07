@@ -16,8 +16,8 @@ Der vollständige Architekturplan steht in [`docs/executive-master-prompt.md`](d
   (veröffentlichte Versionen sind unveränderlich), Formularentwürfe, Anhänge, Sende-Protokoll.
 
 Aktueller Stand: **M1** (Fundament + Formular-Engine + Web-Admin), **M2** (Web-Entwurf ausfüllen,
-PDF-Erzeugung, Versand) und **M3** (Mobile-App, online) sind umgesetzt und end-to-end verifiziert.
-**M4** (Offline-Sync) und **M5** (Feinschliff echtes Übergabeprotokoll) folgen.
+PDF-Erzeugung, Versand), **M3** (Mobile-App, online) und **M4** (Offline-Sync) sind umgesetzt und
+end-to-end verifiziert. **M5** (Feinschliff echtes Übergabeprotokoll) folgt.
 
 M2 ergänzt:
 - **`packages/form-renderer`**: React-Komponente (Web/DOM), die ein Vorlagen-Schema in ein ausfüllbares
@@ -39,6 +39,29 @@ M3 ergänzt:
   koexistieren, baut `@hgi/api` jetzt echte `.d.ts`-Dateien (`pnpm --filter @hgi/api build`) statt rohen
   Quellcode als Typ-Export zu nutzen — sonst hätte TypeScript beim Prüfen von `apps/mobile` transitiv
   den React-PDF-Code aus `@hgi/pdf` mitprüfen müssen und wäre auf einen React-18/19-Typkonflikt gelaufen.
+
+M4 ergänzt (Offline-Sync, Mobile):
+- **Lokaler Offline-Store** (`apps/mobile/src/lib/offlineStorage.ts` + `offlineStore.ts`): ein JSON-Store
+  pro Gerät (nativ: `expo-file-system`-Datei im Dokumentenverzeichnis, Web: `localStorage`), der Vorlagen,
+  Objekte/Wohnungen, Entwürfe und Anhänge zwischenspeichert. Fotos werden zusätzlich als eigene Datei ins
+  Dokumentenverzeichnis kopiert, damit sie einen App-Neustart überleben, während ein Entwurf noch auf die
+  Synchronisierung wartet.
+- **Lokal-first UI**: Alle drei Mobile-Screens (`app/index.tsx`, `app/templates/[id].tsx`,
+  `app/drafts/[id].tsx`) lesen zuerst aus dem lokalen Store und fallen bei fehlender Verbindung auf die
+  zwischengespeicherten Daten zurück, statt einen Ladefehler zu zeigen. "Neuer Entwurf" erzeugt sofort
+  einen lokalen Entwurf (per geräteseitig generierter `clientUuid`, via `expo-crypto`) — ganz ohne
+  Serverkontakt, damit das auch im Keller/ohne Empfang funktioniert.
+- **Sync-Engine im Outbox-Muster** (`apps/mobile/src/lib/sync.ts`): synchronisiert bei jeder Gelegenheit
+  (Bildschirmfokus, nach Speichern, nach Foto-Aufnahme) alle ausstehenden lokalen Entwürfe und Anhänge zum
+  Server — idempotent über die geräteseitige `clientUuid`, damit ein wiederholter Sync-Versuch (z. B. nach
+  Abbruch) keine Duplikate erzeugt. Ein offline getätigter "Senden"-Tastendruck wird als
+  `pendingSendRecipients` vermerkt und automatisch ausgelöst, sobald Entwurf und alle Anhänge
+  synchronisiert sind.
+- **API-Gegenstück** (`apps/api/src/trpc/routers/drafts.ts`): `drafts.syncUpsert` (Upsert per `clientUuid`)
+  und `drafts.getByClientUuid`; `POST /uploads` (`apps/api/src/routes/files.ts`) akzeptiert optional eine
+  geräteseitige `clientUuid`, um einen wiederholten Foto-Upload nicht doppelt abzulegen.
+- Versendete Protokolle bleiben unveränderlich: ein Sync-Versuch für einen bereits `SENT`-Entwurf wird vom
+  Server ignoriert (gibt den unveränderten Entwurf zurück) statt ihn zu überschreiben.
 
 ## Lokale Entwicklung
 
@@ -94,6 +117,15 @@ Für die native App (iOS/Android via Expo Go oder Dev-Client) tritt dieses Probl
 dort ein anderer, funktionierender Pfad für die Fehlerüberlagerung verwendet wird. Sobald Expo
 eine neue Patch-Version von `@expo/log-box` veröffentlicht, sollte `expo start --web` wieder
 funktionieren.
+
+Der Offline-Sync (M4) wurde über diesen Web-Export end-to-end verifiziert (Netztrennung über
+Playwrights `context.setOffline()`, da kein physisches Gerät/Emulator zur Verfügung steht): Entwurf
+offline anlegen und ausfüllen → Speichern zeigt korrekt "wird synchronisiert" statt eines Fehlers →
+nach Wiederverbindung automatischer Sync → serverseitig über die Web-Admin-Ansicht bestätigt. Die
+Fotoaufnahme selbst wurde dabei nicht mitgetestet, da `expo-image-picker` im Web-Export einen
+nativen Datei-Auswahldialog öffnet, den Playwright in dieser Umgebung nicht ansteuern kann — die
+Upload-/Sync-Logik dafür (`persistLocalPhoto`, idempotenter Upload per `clientUuid`) ist dieselbe wie
+für Entwürfe und lässt sich nur auf einem echten Gerät vollständig durchspielen.
 
 ## Hinweis zu Auth/Storage/E-Mail in Produktion
 

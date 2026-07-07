@@ -2,25 +2,39 @@ import { useCallback, useState } from "react";
 import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useAuth } from "../src/lib/auth";
+import { cacheTemplates, getCachedTemplates, type CachedTemplate } from "../src/lib/offlineStore";
+import { runSync } from "../src/lib/sync";
 
-interface TemplateListItem {
-  id: string;
-  name: string;
-  currentVersion: { status: string; versionNumber: number } | null;
-}
+type TemplateListItem = CachedTemplate;
 
 export default function TemplatesHomeScreen() {
-  const { apiClient, user, logout } = useAuth();
+  const { apiClient, user, logout, token } = useAuth();
   const router = useRouter();
   const [templates, setTemplates] = useState<TemplateListItem[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isOffline, setIsOffline] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
       apiClient.templates.list
         .query()
-        .then(setTemplates)
-        .catch(() => setError("Vorlagen konnten nicht geladen werden."));
+        .then(async (list) => {
+          setIsOffline(false);
+          setError(null);
+          setTemplates(list);
+          await cacheTemplates(list);
+          void runSync(apiClient, token);
+        })
+        .catch(async () => {
+          const cached = await getCachedTemplates();
+          if (cached.length > 0) {
+            setTemplates(cached);
+            setIsOffline(true);
+          } else {
+            setError("Vorlagen konnten nicht geladen werden.");
+          }
+        });
+      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [apiClient]),
   );
 
@@ -34,6 +48,7 @@ export default function TemplatesHomeScreen() {
           <Text style={styles.logout}>Abmelden</Text>
         </Pressable>
       </View>
+      {isOffline && <Text style={styles.offline}>Offline – zuletzt geladene Vorlagen werden angezeigt.</Text>}
       {error && <Text style={styles.error}>{error}</Text>}
       <FlatList
         data={templates ?? []}
@@ -65,6 +80,7 @@ const styles = StyleSheet.create({
   headerText: { fontWeight: "500" },
   logout: { color: "#b3182c", fontWeight: "600" },
   error: { color: "#a33", paddingHorizontal: 16 },
+  offline: { color: "#8a6d00", backgroundColor: "#fff3cd", paddingVertical: 6, paddingHorizontal: 16, fontSize: 12 },
   grid: { padding: 12 },
   row: { gap: 12 },
   tile: {
