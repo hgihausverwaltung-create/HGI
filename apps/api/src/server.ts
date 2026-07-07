@@ -4,6 +4,7 @@ import { fastifyTRPCPlugin } from "@trpc/server/adapters/fastify";
 import { appRouter } from "./trpc/router";
 import { createContext } from "./trpc/context";
 import { env } from "./lib/env";
+import { registerFileRoutes } from "./routes/files";
 
 async function main() {
   const app = Fastify({ logger: true });
@@ -14,6 +15,8 @@ async function main() {
     prefix: "/trpc",
     trpcOptions: { router: appRouter, createContext },
   });
+
+  await registerFileRoutes(app);
 
   app.get("/health", async () => ({ status: "ok" }));
 

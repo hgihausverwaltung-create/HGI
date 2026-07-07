@@ -16,7 +16,11 @@ interface AuthContextValue {
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
   isLoading: boolean;
+  token: string | null;
+  apiBaseUrl: string;
 }
+
+const API_BASE_URL = (import.meta.env.VITE_API_URL ?? "http://localhost:4000/trpc").replace(/\/trpc\/?$/, "");
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
@@ -76,7 +80,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   }, []);
 
-  const value = useMemo(() => ({ user, apiClient, login, logout, isLoading }), [user, apiClient, login, logout, isLoading]);
+  const value = useMemo(
+    () => ({ user, apiClient, login, logout, isLoading, token, apiBaseUrl: API_BASE_URL }),
+    [user, apiClient, login, logout, isLoading, token],
+  );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

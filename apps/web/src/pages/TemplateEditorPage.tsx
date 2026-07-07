@@ -90,7 +90,7 @@ export function TemplateEditorPage({ mode }: { mode: "create" | "edit" }) {
         description: description || undefined,
         schema: parsedSchemaResult.value,
       });
-      navigate(`/templates/${created.id}`);
+      navigate(`/templates/${created.id}/edit`);
     } catch (e) {
       setSaveError(e instanceof Error ? e.message : "Speichern fehlgeschlagen");
     } finally {

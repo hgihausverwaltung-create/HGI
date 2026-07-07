@@ -8,5 +8,9 @@ build/
 !.env.example
 .DS_Store
 apps/api/generated/
+apps/api/storage/files/*
+apps/api/storage/outbox/*
+!apps/api/storage/files/.gitkeep
+!apps/api/storage/outbox/.gitkeep
 apps/mobile/.expo/
 coverage/
