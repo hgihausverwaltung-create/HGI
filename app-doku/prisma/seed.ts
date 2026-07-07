@@ -29,7 +29,7 @@ async function main() {
     },
   });
 
-  await prisma.objekt.upsert({
+  const objekt = await prisma.objekt.upsert({
     where: { externeId: "seed-objekt-1" },
     update: {},
     create: {
@@ -40,6 +40,35 @@ async function main() {
       externeId: "seed-objekt-1",
     },
   });
+
+  if ((await prisma.versammlung.count()) === 0) {
+    await prisma.versammlung.create({
+      data: {
+        titel: "Ordentliche Eigentuemerversammlung 2026",
+        datum: new Date("2026-08-15T18:00:00"),
+        einladungsdatum: new Date("2026-07-25T00:00:00"),
+        status: "GEPLANT",
+        objektId: objekt.id,
+        tagesordnungspunkte: {
+          create: [
+            { reihenfolge: 1, titel: "Begruessung und Feststellung der Beschlussfaehigkeit" },
+            {
+              reihenfolge: 2,
+              titel: "Genehmigung der Jahresabrechnung 2025",
+              beschlussvorschlag:
+                "Die Eigentuemerversammlung genehmigt die vorgelegte Jahresabrechnung 2025.",
+            },
+            {
+              reihenfolge: 3,
+              titel: "Beschluss ueber Fassadensanierung",
+              beschreibung: "Angebot der Firma Mustermann Bau liegt vor.",
+              beschlussvorschlag: "Die Fassadensanierung wird gemaess Angebot beauftragt.",
+            },
+          ],
+        },
+      },
+    });
+  }
 
   console.log("Seed abgeschlossen. Testbenutzer: %s / test1234", testEmail);
 }

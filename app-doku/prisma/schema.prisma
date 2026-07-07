@@ -26,6 +26,17 @@ enum ImportJobStatus {
   FAILED
 }
 
+enum VersammlungStatus {
+  GEPLANT
+  DURCHGEFUEHRT
+}
+
+enum TagesordnungsErgebnis {
+  ANGENOMMEN
+  ABGELEHNT
+  VERTAGT
+}
+
 model User {
   id           String   @id @default(uuid())
   email        String   @unique
@@ -47,8 +58,9 @@ model Objekt {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  einheiten  Einheit[]
-  dokumente  Dokument[]
+  einheiten     Einheit[]
+  dokumente     Dokument[]
+  versammlungen Versammlung[]
 }
 
 model Einheit {
@@ -141,10 +153,52 @@ model Dokument {
   hochgeladenAm    DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
 
+  versammlungen    Versammlung[]
+
   @@index([kategorieId])
   @@index([objektId])
   @@index([dateiname])
   @@index([hochgeladenAm])
+}
+
+model Versammlung {
+  id              String            @id @default(uuid())
+  titel           String
+  datum           DateTime
+  einladungsdatum DateTime?
+  status          VersammlungStatus @default(GEPLANT)
+
+  objektId        String
+  objekt          Objekt            @relation(fields: [objektId], references: [id], onDelete: Cascade)
+
+  dokumentId      String?
+  dokument        Dokument?         @relation(fields: [dokumentId], references: [id], onDelete: SetNull)
+
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  tagesordnungspunkte Tagesordnungspunkt[]
+
+  @@index([objektId])
+  @@index([status])
+  @@index([datum])
+}
+
+model Tagesordnungspunkt {
+  id                 String                 @id @default(uuid())
+  versammlungId      String
+  versammlung        Versammlung            @relation(fields: [versammlungId], references: [id], onDelete: Cascade)
+  reihenfolge        Int
+  titel              String
+  beschreibung       String?
+  beschlussvorschlag String?
+  ergebnis           TagesordnungsErgebnis?
+
+  createdAt          DateTime               @default(now())
+  updatedAt          DateTime               @updatedAt
+
+  @@index([versammlungId])
+  @@unique([versammlungId, reihenfolge])
 }
 
 model ImportJob {

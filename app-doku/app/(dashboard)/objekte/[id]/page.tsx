@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { createEinheit } from "@/lib/actions/einheiten";
 import { Field, inputClassName } from "@/components/ui/Field";
 import { Button } from "@/components/ui/Button";
+import { VERSAMMLUNG_STATUS_LABELS } from "@/lib/validation/versammlung";
 
 export default async function ObjektDetailPage({
   params,
@@ -17,6 +18,7 @@ export default async function ObjektDetailPage({
     include: {
       einheiten: { orderBy: { bezeichnung: "asc" } },
       dokumente: { orderBy: { hochgeladenAm: "desc" }, include: { kategorie: true } },
+      versammlungen: { orderBy: { datum: "desc" } },
     },
   });
 
@@ -97,6 +99,43 @@ export default async function ObjektDetailPage({
                       </Link>
                     </td>
                     <td className="px-4 py-2 text-zinc-500">{doc.kategorie.name}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </section>
+
+      <section className="flex flex-col gap-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-medium text-zinc-700">Versammlungen</h2>
+          <Link href={`/versammlungen/neu?objektId=${objekt.id}`}>
+            <Button variant="secondary">Versammlung anlegen</Button>
+          </Link>
+        </div>
+        <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white">
+          {objekt.versammlungen.length === 0 ? (
+            <p className="p-4 text-sm text-zinc-500">Noch keine Versammlungen vorhanden.</p>
+          ) : (
+            <table className="w-full text-sm">
+              <tbody>
+                {objekt.versammlungen.map((versammlung) => (
+                  <tr key={versammlung.id} className="border-t border-zinc-100 first:border-t-0">
+                    <td className="px-4 py-2">
+                      <Link
+                        href={`/versammlungen/${versammlung.id}`}
+                        className="text-zinc-900 hover:underline"
+                      >
+                        {versammlung.titel}
+                      </Link>
+                    </td>
+                    <td className="px-4 py-2 text-zinc-500">
+                      {VERSAMMLUNG_STATUS_LABELS[versammlung.status]}
+                    </td>
+                    <td className="px-4 py-2 text-zinc-500">
+                      {versammlung.datum.toLocaleDateString("de-DE")}
+                    </td>
                   </tr>
                 ))}
               </tbody>
