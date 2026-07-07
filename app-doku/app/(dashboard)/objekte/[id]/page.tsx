@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { createEinheit } from "@/lib/actions/einheiten";
 import { Field, inputClassName } from "@/components/ui/Field";
 import { Button } from "@/components/ui/Button";
+import { KONTAKT_TYP_LABELS } from "@/lib/validation/kontakt";
 
 export default async function ObjektDetailPage({
   params,
@@ -17,6 +18,7 @@ export default async function ObjektDetailPage({
     include: {
       einheiten: { orderBy: { bezeichnung: "asc" } },
       dokumente: { orderBy: { hochgeladenAm: "desc" }, include: { kategorie: true } },
+      kontakte: { orderBy: { name: "asc" } },
     },
   });
 
@@ -97,6 +99,35 @@ export default async function ObjektDetailPage({
                       </Link>
                     </td>
                     <td className="px-4 py-2 text-zinc-500">{doc.kategorie.name}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </section>
+
+      <section className="flex flex-col gap-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-medium text-zinc-700">Kontakte</h2>
+          <Link href={`/kontakte/neu?objektId=${objekt.id}`}>
+            <Button variant="secondary">Kontakt anlegen</Button>
+          </Link>
+        </div>
+        <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white">
+          {objekt.kontakte.length === 0 ? (
+            <p className="p-4 text-sm text-zinc-500">Noch keine Kontakte vorhanden.</p>
+          ) : (
+            <table className="w-full text-sm">
+              <tbody>
+                {objekt.kontakte.map((kontakt) => (
+                  <tr key={kontakt.id} className="border-t border-zinc-100 first:border-t-0">
+                    <td className="px-4 py-2">
+                      <Link href={`/kontakte/${kontakt.id}`} className="text-zinc-900 hover:underline">
+                        {kontakt.name}
+                      </Link>
+                    </td>
+                    <td className="px-4 py-2 text-zinc-500">{KONTAKT_TYP_LABELS[kontakt.typ]}</td>
                   </tr>
                 ))}
               </tbody>
