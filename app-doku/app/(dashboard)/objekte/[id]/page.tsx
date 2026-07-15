@@ -5,6 +5,7 @@ import { createEinheit } from "@/lib/actions/einheiten";
 import { Field, inputClassName } from "@/components/ui/Field";
 import { Button } from "@/components/ui/Button";
 import { VERSAMMLUNG_STATUS_LABELS } from "@/lib/validation/versammlung";
+import { WIRTSCHAFTSPLAN_STATUS_LABELS } from "@/lib/validation/wirtschaftsplan";
 
 export default async function ObjektDetailPage({
   params,
@@ -19,6 +20,7 @@ export default async function ObjektDetailPage({
       einheiten: { orderBy: { bezeichnung: "asc" } },
       dokumente: { orderBy: { hochgeladenAm: "desc" }, include: { kategorie: true } },
       versammlungen: { orderBy: { datum: "desc" } },
+      wirtschaftsplaene: { orderBy: { wirtschaftsjahr: "desc" } },
     },
   });
 
@@ -135,6 +137,40 @@ export default async function ObjektDetailPage({
                     </td>
                     <td className="px-4 py-2 text-zinc-500">
                       {versammlung.datum.toLocaleDateString("de-DE")}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </section>
+
+      <section className="flex flex-col gap-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-medium text-zinc-700">Wirtschaftsplaene</h2>
+          <Link href={`/wirtschaftsplaene/neu?objektId=${objekt.id}`}>
+            <Button variant="secondary">Wirtschaftsplan anlegen</Button>
+          </Link>
+        </div>
+        <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white">
+          {objekt.wirtschaftsplaene.length === 0 ? (
+            <p className="p-4 text-sm text-zinc-500">Noch keine Wirtschaftsplaene vorhanden.</p>
+          ) : (
+            <table className="w-full text-sm">
+              <tbody>
+                {objekt.wirtschaftsplaene.map((plan) => (
+                  <tr key={plan.id} className="border-t border-zinc-100 first:border-t-0">
+                    <td className="px-4 py-2">
+                      <Link
+                        href={`/wirtschaftsplaene/${plan.id}`}
+                        className="text-zinc-900 hover:underline"
+                      >
+                        {plan.wirtschaftsjahr}
+                      </Link>
+                    </td>
+                    <td className="px-4 py-2 text-zinc-500">
+                      {WIRTSCHAFTSPLAN_STATUS_LABELS[plan.status]}
                     </td>
                   </tr>
                 ))}

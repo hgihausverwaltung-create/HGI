@@ -37,6 +37,11 @@ enum TagesordnungsErgebnis {
   VERTAGT
 }
 
+enum WirtschaftsplanStatus {
+  ENTWURF
+  BESCHLOSSEN
+}
+
 model User {
   id           String   @id @default(uuid())
   email        String   @unique
@@ -58,9 +63,10 @@ model Objekt {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  einheiten     Einheit[]
-  dokumente     Dokument[]
-  versammlungen Versammlung[]
+  einheiten        Einheit[]
+  dokumente        Dokument[]
+  versammlungen    Versammlung[]
+  wirtschaftsplaene Wirtschaftsplan[]
 }
 
 model Einheit {
@@ -75,6 +81,7 @@ model Einheit {
   eigentuemer EinheitEigentuemer[]
   mieter      Mieter[]
   dokumente   Dokument[]
+  hausgeldSollPositionen HausgeldSoll[]
 
   @@index([objektId])
 }
@@ -178,6 +185,7 @@ model Versammlung {
   updatedAt       DateTime          @updatedAt
 
   tagesordnungspunkte Tagesordnungspunkt[]
+  wirtschaftsplaene   Wirtschaftsplan[]
 
   @@index([objektId])
   @@index([status])
@@ -199,6 +207,42 @@ model Tagesordnungspunkt {
 
   @@index([versammlungId])
   @@unique([versammlungId, reihenfolge])
+}
+
+model Wirtschaftsplan {
+  id              String                @id @default(uuid())
+  wirtschaftsjahr Int
+  status          WirtschaftsplanStatus @default(ENTWURF)
+
+  objektId        String
+  objekt          Objekt                @relation(fields: [objektId], references: [id], onDelete: Cascade)
+
+  versammlungId   String?
+  versammlung     Versammlung?          @relation(fields: [versammlungId], references: [id], onDelete: SetNull)
+
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+
+  hausgeldSollPositionen HausgeldSoll[]
+
+  @@unique([objektId, wirtschaftsjahr])
+  @@index([objektId])
+  @@index([status])
+}
+
+model HausgeldSoll {
+  id                String          @id @default(uuid())
+  wirtschaftsplanId String
+  wirtschaftsplan   Wirtschaftsplan @relation(fields: [wirtschaftsplanId], references: [id], onDelete: Cascade)
+  einheitId         String
+  einheit           Einheit         @relation(fields: [einheitId], references: [id], onDelete: Cascade)
+  betragMonatlich   Decimal         @db.Decimal(10, 2)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  @@unique([wirtschaftsplanId, einheitId])
+  @@index([wirtschaftsplanId])
+  @@index([einheitId])
 }
 
 model ImportJob {

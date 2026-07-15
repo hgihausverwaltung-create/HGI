@@ -70,6 +70,57 @@ async function main() {
     });
   }
 
+  const einheit1 = await prisma.einheit.upsert({
+    where: { externeId: "seed-einheit-1" },
+    update: {},
+    create: {
+      objektId: objekt.id,
+      bezeichnung: "WE 1",
+      typ: "WOHNUNG",
+      externeId: "seed-einheit-1",
+    },
+  });
+
+  const einheit2 = await prisma.einheit.upsert({
+    where: { externeId: "seed-einheit-2" },
+    update: {},
+    create: {
+      objektId: objekt.id,
+      bezeichnung: "WE 2",
+      typ: "WOHNUNG",
+      externeId: "seed-einheit-2",
+    },
+  });
+
+  const versammlungFuerPlan = await prisma.versammlung.findFirst({ where: { objektId: objekt.id } });
+
+  const wirtschaftsplan = await prisma.wirtschaftsplan.upsert({
+    where: { objektId_wirtschaftsjahr: { objektId: objekt.id, wirtschaftsjahr: 2026 } },
+    update: {},
+    create: {
+      objektId: objekt.id,
+      wirtschaftsjahr: 2026,
+      status: "ENTWURF",
+      versammlungId: versammlungFuerPlan?.id,
+    },
+  });
+
+  await prisma.hausgeldSoll.upsert({
+    where: {
+      wirtschaftsplanId_einheitId: { wirtschaftsplanId: wirtschaftsplan.id, einheitId: einheit1.id },
+    },
+    update: {},
+    create: { wirtschaftsplanId: wirtschaftsplan.id, einheitId: einheit1.id, betragMonatlich: "250.00" },
+  });
+
+  await prisma.hausgeldSoll.upsert({
+    where: {
+      wirtschaftsplanId_einheitId: { wirtschaftsplanId: wirtschaftsplan.id, einheitId: einheit2.id },
+    },
+    update: {},
+    create: { wirtschaftsplanId: wirtschaftsplan.id, einheitId: einheit2.id, betragMonatlich: "180.00" },
+  });
+
   console.log("Seed abgeschlossen. Testbenutzer: %s / test1234", testEmail);
 }
 
