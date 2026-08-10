@@ -42,6 +42,26 @@ enum WirtschaftsplanStatus {
   BESCHLOSSEN
 }
 
+enum TicketStatus {
+  OFFEN
+  IN_BEARBEITUNG
+  ERLEDIGT
+  STORNIERT
+}
+
+enum TicketPrioritaet {
+  NIEDRIG
+  NORMAL
+  HOCH
+}
+
+enum TicketKategorie {
+  SCHADENSMELDUNG
+  ANFRAGE
+  BESCHWERDE
+  SONSTIGES
+}
+
 model User {
   id           String   @id @default(uuid())
   email        String   @unique
@@ -51,6 +71,8 @@ model User {
   createdAt    DateTime @default(now())
 
   hochgeladeneDokumente Dokument[]
+  zugewieseneTickets    Ticket[]         @relation("TicketZugewiesenAn")
+  ticketKommentare      TicketKommentar[]
 }
 
 model Objekt {
@@ -67,6 +89,7 @@ model Objekt {
   dokumente        Dokument[]
   versammlungen    Versammlung[]
   wirtschaftsplaene Wirtschaftsplan[]
+  tickets          Ticket[]
 }
 
 model Einheit {
@@ -82,6 +105,7 @@ model Einheit {
   mieter      Mieter[]
   dokumente   Dokument[]
   hausgeldSollPositionen HausgeldSoll[]
+  tickets     Ticket[]
 
   @@index([objektId])
 }
@@ -96,6 +120,7 @@ model Eigentuemer {
 
   einheiten EinheitEigentuemer[]
   dokumente Dokument[]
+  tickets   Ticket[]
 }
 
 model EinheitEigentuemer {
@@ -119,6 +144,7 @@ model Mieter {
   createdAt DateTime @default(now())
 
   dokumente Dokument[]
+  tickets   Ticket[]
 
   @@index([einheitId])
 }
@@ -243,6 +269,56 @@ model HausgeldSoll {
   @@unique([wirtschaftsplanId, einheitId])
   @@index([wirtschaftsplanId])
   @@index([einheitId])
+}
+
+model Ticket {
+  id              String           @id @default(uuid())
+  titel           String
+  beschreibung    String?
+  kategorie       TicketKategorie  @default(SONSTIGES)
+  prioritaet      TicketPrioritaet @default(NORMAL)
+  status          TicketStatus     @default(OFFEN)
+
+  objektId        String
+  objekt          Objekt           @relation(fields: [objektId], references: [id], onDelete: Cascade)
+
+  einheitId       String?
+  einheit         Einheit?         @relation(fields: [einheitId], references: [id], onDelete: SetNull)
+
+  mieterId        String?
+  mieter          Mieter?          @relation(fields: [mieterId], references: [id], onDelete: SetNull)
+
+  eigentuemerId   String?
+  eigentuemer     Eigentuemer?     @relation(fields: [eigentuemerId], references: [id], onDelete: SetNull)
+
+  zugewiesenAnId  String?
+  zugewiesenAn    User?            @relation("TicketZugewiesenAn", fields: [zugewiesenAnId], references: [id], onDelete: SetNull)
+
+  externeId       String?          @unique
+
+  gemeldetAm      DateTime         @default(now())
+  erledigtAm      DateTime?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  kommentare      TicketKommentar[]
+
+  @@index([objektId])
+  @@index([status])
+  @@index([prioritaet])
+  @@index([zugewiesenAnId])
+}
+
+model TicketKommentar {
+  id             String   @id @default(uuid())
+  ticketId       String
+  ticket         Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  text           String
+  erstelltVonId  String
+  erstelltVon    User     @relation(fields: [erstelltVonId], references: [id])
+  createdAt      DateTime @default(now())
+
+  @@index([ticketId])
 }
 
 model ImportJob {
