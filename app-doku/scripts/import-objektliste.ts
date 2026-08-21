@@ -10,6 +10,10 @@
  *   gelistetes WEG-Objekt betreffen: Nr. 206, 900, 901, 903, 904, 950, 951.
  * - Archivierte, nicht mehr aktiv gefuehrte Objekte: Nr. 287, 600, 638.
  *
+ * Nr. 87 (WEG Auf dem Busch 44-78) fehlte im Export und wurde am
+ * 21.08.2026 von Edgard Schroeder nachgetragen - PLZ/Ort per Rueckfrage
+ * bestaetigt (gleiche Strasse wie Nr. 2, 33699 Bielefeld).
+ *
  * externeId = "wincasa-<Objektnummer>" fuer einen spaeteren Abgleich mit
  * WinCasa/idwell. Idempotent per upsert - mehrfacher Aufruf ist sicher.
  *
@@ -56,6 +60,7 @@ const WEG_OBJEKTE: ObjektEintrag[] = [
   { nr: 57, name: "WEG Jungbrunnenweg 71/73/75", strasse: "Jungbrunnenweg 71/73/75", plz: "33609", ort: "Bielefeld" },
   { nr: 69, name: "WEG Mainweg 69A", strasse: "Mainweg 69A", plz: "33689", ort: "Bielefeld" },
   { nr: 74, name: "WEG Dornberger Strasse 274-276", strasse: "Dornberger Strasse 274-276", plz: "33619", ort: "Bielefeld" },
+  { nr: 87, name: "WEG Auf dem Busch 44-78", strasse: "Auf dem Busch 44-78", plz: "33699", ort: "Bielefeld" },
   { nr: 88, name: "WEG Osnabruecker Str. 88", strasse: "Osnabruecker Str. 88", plz: "33649", ort: "Bielefeld" },
   { nr: 103, name: "WEG Leharstr. 3/3A/3B", strasse: "Leharstr. 3/3A/3B", plz: "33647", ort: "Bielefeld" },
   {
