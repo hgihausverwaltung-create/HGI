@@ -6,6 +6,7 @@ import { Field, inputClassName } from "@/components/ui/Field";
 import { Button } from "@/components/ui/Button";
 import { VERSAMMLUNG_STATUS_LABELS } from "@/lib/validation/versammlung";
 import { WIRTSCHAFTSPLAN_STATUS_LABELS } from "@/lib/validation/wirtschaftsplan";
+import { TICKET_STATUS_LABELS } from "@/lib/validation/ticket";
 
 export default async function ObjektDetailPage({
   params,
@@ -21,6 +22,7 @@ export default async function ObjektDetailPage({
       dokumente: { orderBy: { hochgeladenAm: "desc" }, include: { kategorie: true } },
       versammlungen: { orderBy: { datum: "desc" } },
       wirtschaftsplaene: { orderBy: { wirtschaftsjahr: "desc" } },
+      tickets: { orderBy: { gemeldetAm: "desc" } },
     },
   });
 
@@ -172,6 +174,35 @@ export default async function ObjektDetailPage({
                     <td className="px-4 py-2 text-zinc-500">
                       {WIRTSCHAFTSPLAN_STATUS_LABELS[plan.status]}
                     </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </section>
+
+      <section className="flex flex-col gap-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-medium text-zinc-700">Tickets</h2>
+          <Link href={`/tickets/neu?objektId=${objekt.id}`}>
+            <Button variant="secondary">Ticket anlegen</Button>
+          </Link>
+        </div>
+        <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white">
+          {objekt.tickets.length === 0 ? (
+            <p className="p-4 text-sm text-zinc-500">Noch keine Tickets vorhanden.</p>
+          ) : (
+            <table className="w-full text-sm">
+              <tbody>
+                {objekt.tickets.map((ticket) => (
+                  <tr key={ticket.id} className="border-t border-zinc-100 first:border-t-0">
+                    <td className="px-4 py-2">
+                      <Link href={`/tickets/${ticket.id}`} className="text-zinc-900 hover:underline">
+                        {ticket.titel}
+                      </Link>
+                    </td>
+                    <td className="px-4 py-2 text-zinc-500">{TICKET_STATUS_LABELS[ticket.status]}</td>
                   </tr>
                 ))}
               </tbody>
