@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { parseTemplateSchema, validateAnswers, draftAnswersSchema } from "@hgi/form-schema";
-import { DRAFT_STATUSES } from "@hgi/domain";
+import { DRAFT_STATUSES, renderEmailTemplate, type EmailTemplateContext } from "@hgi/domain";
 import { protectedProcedure, router } from "../trpc";
 import { renderProtocolPdf } from "@hgi/pdf";
 import { saveBuffer, resolveStoragePath } from "../../lib/storage";
@@ -48,6 +48,12 @@ function formatTitleTimestamp(date: Date): string {
   const hh = String(date.getHours()).padStart(2, "0");
   const min = String(date.getMinutes()).padStart(2, "0");
   return `${dd}.${mm}. ${hh}:${min}`;
+}
+
+function formatDateDE(date: Date): string {
+  const dd = String(date.getDate()).padStart(2, "0");
+  const mm = String(date.getMonth() + 1).padStart(2, "0");
+  return `${dd}.${mm}.${date.getFullYear()}`;
 }
 
 export const draftsRouter = router({
@@ -202,10 +208,19 @@ export const draftsRouter = router({
         });
         const pdfKey = saveBuffer(pdfBuffer, "pdf");
 
+        const emailContext: EmailTemplateContext = {
+          draftTitle: draft.title,
+          templateName: draft.templateVersion.template.name,
+          propertyLabel: draft.property ? `${draft.property.name}, ${draft.property.street} ${draft.property.houseNumber}` : "",
+          unitLabel: draft.unit?.label ?? "",
+          recipients: input.recipients.join(", "),
+          sentDate: formatDateDE(new Date()),
+        };
+
         await sendEmail({
           to: input.recipients,
-          subject: draft.title,
-          text: `Im Anhang finden Sie das Protokoll "${draft.title}".`,
+          subject: renderEmailTemplate(draft.templateVersion.template.emailSubjectTemplate, emailContext),
+          text: renderEmailTemplate(draft.templateVersion.template.emailBodyTemplate, emailContext),
           attachmentPath: pdfKey,
         });
 

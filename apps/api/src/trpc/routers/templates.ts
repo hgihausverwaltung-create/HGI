@@ -32,6 +32,8 @@ const baseTemplateFields = z.object({
   icon: z.string().nullable(),
   isArchived: z.boolean(),
   currentVersionId: z.string().nullable(),
+  emailSubjectTemplate: z.string(),
+  emailBodyTemplate: z.string(),
   createdAt: z.date(),
   updatedAt: z.date(),
 });
@@ -95,6 +97,8 @@ export const templatesRouter = router({
         name: z.string().min(1),
         description: z.string().optional(),
         icon: z.string().optional(),
+        emailSubjectTemplate: z.string().min(1).optional(),
+        emailBodyTemplate: z.string().min(1).optional(),
         schema: z.unknown(),
       }),
     )
@@ -111,6 +115,8 @@ export const templatesRouter = router({
           name: input.name,
           description: input.description,
           icon: input.icon,
+          ...(input.emailSubjectTemplate ? { emailSubjectTemplate: input.emailSubjectTemplate } : {}),
+          ...(input.emailBodyTemplate ? { emailBodyTemplate: input.emailBodyTemplate } : {}),
           versions: {
             create: {
               versionNumber: 1,
@@ -188,4 +194,30 @@ export const templatesRouter = router({
     });
     return published;
   }),
+
+  /**
+   * Updates the subject/body used when a draft of this template is sent by email. Not tied
+   * to the versioned form schema — it applies to the next send immediately, even for
+   * templates whose current version is already published.
+   */
+  updateEmailTemplate: adminProcedure
+    .input(
+      z.object({
+        templateId: z.string().uuid(),
+        emailSubjectTemplate: z.string().min(1),
+        emailBodyTemplate: z.string().min(1),
+      }),
+    )
+    .output(baseTemplateFields)
+    .mutation(async ({ ctx, input }) => {
+      const template = await ctx.prisma.template.findUnique({ where: { id: input.templateId } });
+      if (!template) throw new TRPCError({ code: "NOT_FOUND", message: "Vorlage nicht gefunden" });
+      return ctx.prisma.template.update({
+        where: { id: template.id },
+        data: {
+          emailSubjectTemplate: input.emailSubjectTemplate,
+          emailBodyTemplate: input.emailBodyTemplate,
+        },
+      });
+    }),
 });

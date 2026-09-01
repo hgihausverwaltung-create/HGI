@@ -30,8 +30,12 @@ interface TemplateDto {
   key: string;
   name: string;
   description: string | null;
+  emailSubjectTemplate: string;
+  emailBodyTemplate: string;
   versions: TemplateVersionDto[];
 }
+
+const EMAIL_PLACEHOLDER_HINT = "Platzhalter: {{draftTitle}}, {{templateName}}, {{propertyLabel}}, {{unitLabel}}, {{recipients}}, {{sentDate}}";
 
 export function TemplateEditorPage({ mode }: { mode: "create" | "edit" }) {
   const { apiClient, user } = useAuth();
@@ -43,8 +47,12 @@ export function TemplateEditorPage({ mode }: { mode: "create" | "edit" }) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [schemaText, setSchemaText] = useState(JSON.stringify(EXAMPLE_SCHEMA, null, 2));
+  const [emailSubjectTemplate, setEmailSubjectTemplate] = useState("");
+  const [emailBodyTemplate, setEmailBodyTemplate] = useState("");
   const [saveError, setSaveError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isSavingEmail, setIsSavingEmail] = useState(false);
+  const [emailSaveError, setEmailSaveError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
   const isAdmin = user?.role === "ADMIN";
@@ -55,6 +63,8 @@ export function TemplateEditorPage({ mode }: { mode: "create" | "edit" }) {
       setTemplate(t);
       setName(t.name);
       setDescription(t.description ?? "");
+      setEmailSubjectTemplate(t.emailSubjectTemplate);
+      setEmailBodyTemplate(t.emailBodyTemplate);
       const latest = t.versions[0];
       if (latest) setSchemaText(JSON.stringify(latest.schema, null, 2));
     });
@@ -136,6 +146,25 @@ export function TemplateEditorPage({ mode }: { mode: "create" | "edit" }) {
       setSaveError(e instanceof Error ? e.message : "Veröffentlichen fehlgeschlagen");
     } finally {
       setIsSaving(false);
+    }
+  }
+
+  async function handleSaveEmailTemplate() {
+    if (!template) return;
+    setEmailSaveError(null);
+    setIsSavingEmail(true);
+    try {
+      const updated = await apiClient.templates.updateEmailTemplate.mutate({
+        templateId: template.id,
+        emailSubjectTemplate,
+        emailBodyTemplate,
+      });
+      setTemplate({ ...template, emailSubjectTemplate: updated.emailSubjectTemplate, emailBodyTemplate: updated.emailBodyTemplate });
+      setNotice("E-Mail-Vorlage gespeichert.");
+    } catch (e) {
+      setEmailSaveError(e instanceof Error ? e.message : "Speichern fehlgeschlagen");
+    } finally {
+      setIsSavingEmail(false);
     }
   }
 
@@ -230,6 +259,37 @@ export function TemplateEditorPage({ mode }: { mode: "create" | "edit" }) {
           )}
         </div>
       </div>
+
+      {mode === "edit" && template && (
+        <div className="card">
+          <h2>E-Mail-Vorlage für den Versand</h2>
+          <p className="hint">{EMAIL_PLACEHOLDER_HINT}</p>
+          <form className="stacked" onSubmit={(e) => e.preventDefault()}>
+            <label>
+              Betreff
+              <input value={emailSubjectTemplate} onChange={(e) => setEmailSubjectTemplate(e.target.value)} required />
+            </label>
+            <label>
+              Text
+              <textarea
+                className="schema-editor"
+                value={emailBodyTemplate}
+                onChange={(e) => setEmailBodyTemplate(e.target.value)}
+                spellCheck={false}
+              />
+            </label>
+          </form>
+          {emailSaveError && <div className="error-box">{emailSaveError}</div>}
+          <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.75rem" }}>
+            <button
+              onClick={handleSaveEmailTemplate}
+              disabled={isSavingEmail || !emailSubjectTemplate.trim() || !emailBodyTemplate.trim()}
+            >
+              E-Mail-Vorlage speichern
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

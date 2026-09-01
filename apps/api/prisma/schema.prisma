@@ -107,15 +107,20 @@ model Unit {
 /// Formularvorlage (die Kachel, z.B. "Übergabeprotokoll"). Der eigentliche Inhalt lebt
 /// versioniert in TemplateVersion.
 model Template {
-  id               String   @id @default(uuid())
-  key              String   @unique // slug, z.B. "uebergabeprotokoll"
-  name             String
-  description      String?
-  icon             String?
-  isArchived       Boolean  @default(false)
-  currentVersionId String?  @unique
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  id                   String   @id @default(uuid())
+  key                  String   @unique // slug, z.B. "uebergabeprotokoll"
+  name                 String
+  description          String?
+  icon                 String?
+  isArchived           Boolean  @default(false)
+  currentVersionId     String?  @unique
+  /// Betreff-Vorlage für den Versand, mit Platzhaltern wie {{draftTitle}}. Bewusst nicht
+  /// Teil der versionierten Formular-Schemas, da sie unabhängig vom Formularinhalt jederzeit
+  /// angepasst werden kann, auch wenn die aktuelle Version bereits veröffentlicht ist.
+  emailSubjectTemplate String   @default("{{draftTitle}}")
+  emailBodyTemplate    String   @default("Im Anhang finden Sie das Protokoll \"{{draftTitle}}\".")
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
 
   versions       TemplateVersion[] @relation("TemplateVersions")
   currentVersion TemplateVersion?  @relation("CurrentVersion", fields: [currentVersionId], references: [id])
