@@ -1,0 +1,215 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  ADMIN
+  MITARBEITER
+}
+
+enum EinheitTyp {
+  WOHNUNG
+  GEWERBE
+  STELLPLATZ
+  SONSTIGES
+}
+
+enum ImportJobStatus {
+  PENDING
+  RUNNING
+  DONE
+  FAILED
+}
+
+enum VersammlungStatus {
+  GEPLANT
+  DURCHGEFUEHRT
+}
+
+enum TagesordnungsErgebnis {
+  ANGENOMMEN
+  ABGELEHNT
+  VERTAGT
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  role         UserRole @default(MITARBEITER)
+  createdAt    DateTime @default(now())
+
+  hochgeladeneDokumente Dokument[]
+}
+
+model Objekt {
+  id        String   @id @default(uuid())
+  name      String
+  strasse   String
+  plz       String
+  ort       String
+  externeId String?  @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  einheiten     Einheit[]
+  dokumente     Dokument[]
+  versammlungen Versammlung[]
+}
+
+model Einheit {
+  id         String      @id @default(uuid())
+  objektId   String
+  objekt     Objekt      @relation(fields: [objektId], references: [id], onDelete: Cascade)
+  bezeichnung String
+  typ        EinheitTyp?
+  externeId  String?     @unique
+  createdAt  DateTime    @default(now())
+
+  eigentuemer EinheitEigentuemer[]
+  mieter      Mieter[]
+  dokumente   Dokument[]
+
+  @@index([objektId])
+}
+
+model Eigentuemer {
+  id        String   @id @default(uuid())
+  name      String
+  email     String?
+  telefon   String?
+  externeId String?  @unique
+  createdAt DateTime @default(now())
+
+  einheiten EinheitEigentuemer[]
+  dokumente Dokument[]
+}
+
+model EinheitEigentuemer {
+  einheitId     String
+  einheit       Einheit     @relation(fields: [einheitId], references: [id], onDelete: Cascade)
+  eigentuemerId String
+  eigentuemer   Eigentuemer @relation(fields: [eigentuemerId], references: [id], onDelete: Cascade)
+  anteil        String?
+
+  @@id([einheitId, eigentuemerId])
+}
+
+model Mieter {
+  id        String   @id @default(uuid())
+  name      String
+  email     String?
+  telefon   String?
+  einheitId String
+  einheit   Einheit  @relation(fields: [einheitId], references: [id], onDelete: Cascade)
+  externeId String?  @unique
+  createdAt DateTime @default(now())
+
+  dokumente Dokument[]
+
+  @@index([einheitId])
+}
+
+model DokumentKategorie {
+  id        String     @id @default(uuid())
+  name      String     @unique
+  sortOrder Int        @default(0)
+
+  dokumente Dokument[]
+}
+
+model Dokument {
+  id               String            @id @default(uuid())
+  dateiname        String
+  speicherPfad     String
+  mimeType         String
+  dateigroesse     Int
+  beschreibung     String?
+
+  kategorieId      String
+  kategorie        DokumentKategorie @relation(fields: [kategorieId], references: [id])
+
+  objektId         String
+  objekt           Objekt            @relation(fields: [objektId], references: [id], onDelete: Cascade)
+
+  einheitId        String?
+  einheit          Einheit?          @relation(fields: [einheitId], references: [id], onDelete: SetNull)
+
+  eigentuemerId    String?
+  eigentuemer      Eigentuemer?      @relation(fields: [eigentuemerId], references: [id], onDelete: SetNull)
+
+  mieterId         String?
+  mieter           Mieter?           @relation(fields: [mieterId], references: [id], onDelete: SetNull)
+
+  hochgeladenVonId String
+  hochgeladenVon   User              @relation(fields: [hochgeladenVonId], references: [id])
+
+  hochgeladenAm    DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  versammlungen    Versammlung[]
+
+  @@index([kategorieId])
+  @@index([objektId])
+  @@index([dateiname])
+  @@index([hochgeladenAm])
+}
+
+model Versammlung {
+  id              String            @id @default(uuid())
+  titel           String
+  datum           DateTime
+  einladungsdatum DateTime?
+  status          VersammlungStatus @default(GEPLANT)
+
+  objektId        String
+  objekt          Objekt            @relation(fields: [objektId], references: [id], onDelete: Cascade)
+
+  dokumentId      String?
+  dokument        Dokument?         @relation(fields: [dokumentId], references: [id], onDelete: SetNull)
+
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  tagesordnungspunkte Tagesordnungspunkt[]
+
+  @@index([objektId])
+  @@index([status])
+  @@index([datum])
+}
+
+model Tagesordnungspunkt {
+  id                 String                 @id @default(uuid())
+  versammlungId      String
+  versammlung        Versammlung            @relation(fields: [versammlungId], references: [id], onDelete: Cascade)
+  reihenfolge        Int
+  titel              String
+  beschreibung       String?
+  beschlussvorschlag String?
+  ergebnis           TagesordnungsErgebnis?
+
+  createdAt          DateTime               @default(now())
+  updatedAt          DateTime               @updatedAt
+
+  @@index([versammlungId])
+  @@unique([versammlungId, reihenfolge])
+}
+
+model ImportJob {
+  id              String          @id @default(uuid())
+  quelle          String
+  status          ImportJobStatus @default(PENDING)
+  zeilenGesamt    Int             @default(0)
+  zeilenErfolgreich Int           @default(0)
+  zeilenFehler    Int             @default(0)
+  fehlerLog       String?
+  startedAt       DateTime?
+  finishedAt      DateTime?
+  createdAt       DateTime        @default(now())
+}
