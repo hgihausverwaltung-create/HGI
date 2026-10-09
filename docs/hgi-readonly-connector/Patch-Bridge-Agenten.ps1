@@ -11,7 +11,7 @@
     ERST ausführen, wenn der Server diese beiden Werkzeuge für ALLE Identitäten freigeschaltet hat –
     sonst lehnt die Bridge ab ("Unexpected HGI tool set") und der Connector fällt aus.
   - Mit -ZusatzWerkzeuge 'name1','name2' werden weitere, vom Server bestätigte Werkzeuge ergänzt
-    (z. B. das Outlook-Entwurfswerkzeug, sobald Herr Kreker/Codex den genauen Namen mitteilt).
+    (Entscheidung 09.10.2026: create_ticket, update_ticket, send_mail, create_calendar_event).
     Gleiche Regel: erst Server, dann Bridge.
   - Mit -Trockenlauf wird nur angezeigt, was geändert würde.
   Stand: 09.10.2026 (Wissenseintrag ergänzt)

@@ -1,57 +1,46 @@
-# Anfrage an Codex / Herrn Kreker – persönliche Lesezugänge für die Agenten-API
+# Auftrag an Codex (Betrieb HGI-Plattform) – persönliche Claude-Zugänge für die Agenten-API
 
-**Betreff:** HGI-Plattform – Agenten-API – drei persönliche Claude-Zugänge (Lesen, Wissenseintrag, Outlook-Entwürfe)
+Stand: 09.10.2026 · Auftraggeber: Edgard Schröder · Umsetzung auf `ubuntu17` (192.168.50.17)
 
-Guten Tag Herr Kreker,
+## Ziel
 
-für den lokalen Claude-Connector `hgi-datenbank-readonly` sollen künftig vier Mitarbeiter
-der HGI Immobilien GmbH mit jeweils eigener Identität auf die Agenten-API
-(`https://192.168.50.17/agent-api/mcp`) zugreifen. Bitte richten Sie Folgendes ein:
+Der lokale Claude-Connector `hgi-datenbank-readonly` (Python-Bridge auf den Arbeitsplätzen) soll für
+vier Mitarbeiter der HGI Immobilien GmbH mit jeweils eigener Identität und eigenem Token auf
+`https://192.168.50.17/agent-api/mcp` zugreifen.
 
-1. **Drei neue Agenten-Identitäten**, jeweils mit eigenem Token:
-   - `claude-leon-schroeder` (Leon Schröder)
-   - `claude-inna-goerz` (Inna Görz)
-   - `claude-marina-korotaev` (Marina Korotaev)
-2. **Rechte:** ausschließlich die 16 Lesewerkzeuge, die `claude-readonly` heute erhält
-   (`attachment_status`, `get_document`, `get_hgi_record`, `get_mail`, `get_ticket`,
-   `hgi_table_schema`, `knowledge_history`, `mail_catalog`, `read_calendar`, `read_wincasa`,
-   `search_hgi_data`, `search_knowledge`, `search_mail`, `search_tickets`,
-   `ticket_attachment_status`, `ticket_history`)
-   **plus** die beiden Wissens-Werkzeuge `save_knowledge` und `update_own_knowledge`.
-   Jeder Mitarbeiter soll Einträge in der Wissensdatenbank anlegen und seine eigenen Einträge
-   ändern können (Entscheidung Herr Schröder, 09.10.2026).
-2b. **Outlook – Entwürfe statt Direktversand** (Entscheidung Herr Schröder, 09.10.2026):
-   Alle vier Identitäten sollen E-Mails über das Postfach **info@hgi-immobilien.de** vorbereiten
-   können, und zwar ausschließlich als **Entwurf im Outlook-Postfach**. Den Versand löst
-   immer ein Mitarbeiter selbst in Outlook aus.
-   - Bitte ein Werkzeug für das Anlegen von Entwürfen bereitstellen (z. B. `create_mail_draft`)
-     und uns den genauen Werkzeugnamen mitteilen.
-   - Das vorhandene `send_mail` (Direktversand) bitte **nicht** freischalten.
-   - Lesen: Bitte bestätigen, ob `search_mail`/`get_mail` das Outlook-Postfach
-     info@hgi-immobilien.de (Eingang und Ausgang) vollständig abdecken oder nur importierte Info-E-Mails.
-   - Anlagen in Entwürfen: Bitte mitteilen, ob Dokumente (z. B. per Dokumentnachweis-ID) angehängt werden können.
-   Darüber hinaus keine Schreibwerkzeuge (kein `create_ticket`, `update_ticket`, `create_calendar_event`).
-   Die Werkzeugliste muss für alle Identitäten exakt gleich sein, da die Bridge jede Abweichung ablehnt.
-2a. **Auch für die bestehende Identität `claude-readonly`** bitte `save_knowledge` und
-   `update_own_knowledge` freischalten, sodass alle vier Identitäten dieselben Werkzeuge erhalten (16 Lesewerkzeuge, 2 Wissens-Werkzeuge, 1 Entwurfswerkzeug).
-   Bitte kurz Bescheid geben, sobald das umgestellt ist – erst danach passen wir die Bridge an,
-   sonst fällt der Connector aus.
-3. **Protokollierung** der Abrufe je Identität.
-4. **Tokens** bitte nicht per E-Mail versenden, sondern persönlich bzw. telefonisch übergeben.
-   Bitte mitteilen, wie ein Token im Bedarfsfall gesperrt wird (z. B. bei Austritt).
-5. **Rückfrage:** Herr Schröder nutzt `claude-readonly` auf zwei Rechnern (Eddy_NUC und AGENT007).
-   Ist je Rechner ein eigenes Token derselben Identität möglich, damit ein Gerät einzeln gesperrt werden kann?
-6. **Hinweis:** Die Bridge auf Herrn Schröders Rechner erwartete bis zum 09.10.2026 zusätzlich
-   Schreibwerkzeuge (`save_knowledge`, `create_ticket`, `send_mail` u. a.), die der Server nicht
-   mehr anbot; der Connector war dadurch ausgefallen. Bitte kurz bestätigen, ob die Rücknahme
-   serverseitig beabsichtigt war. Direktversand (`send_mail`), Ticket- und Kalender-Schreibrechte
-   sollen weiterhin **nicht** freigeschaltet werden.
+## 1. Identitäten
 
-Mit freundlichen Grüßen
+| Identität | Person | Status |
+|---|---|---|
+| `claude-readonly` | Edgard Schröder (AGENT007, Eddy_NUC) | besteht, Rechte erweitern |
+| `claude-leon-schroeder` | Leon Schröder | neu anlegen |
+| `claude-inna-goerz` | Inna Görz | neu anlegen |
+| `claude-marina-korotaev` | Marina Korotaev | neu anlegen |
 
-Edgard Schröder
-HGI Immobilien GmbH
-Hausverwaltung
-Osnabrücker Straße 49
-33649 Bielefeld
-Tel.: +49521 69342
+## 2. Rechte – für alle vier identisch (Entscheidung Edgard Schröder, 09.10.2026)
+
+- **Lesen (16):** `attachment_status`, `get_document`, `get_hgi_record`, `get_mail`, `get_ticket`,
+  `hgi_table_schema`, `knowledge_history`, `mail_catalog`, `read_calendar`, `read_wincasa`,
+  `search_hgi_data`, `search_knowledge`, `search_mail`, `search_tickets`,
+  `ticket_attachment_status`, `ticket_history`
+- **Schreiben (6):** `save_knowledge`, `update_own_knowledge`, `create_ticket`, `update_ticket`,
+  `send_mail` (Absender **info@hgi-immobilien.de**), `create_calendar_event`
+
+Die Werkzeugliste muss für alle vier exakt gleich sein (22 Werkzeuge), da die Bridge jede Abweichung ablehnt.
+WinCasa-Tabellen bleiben nur lesend.
+
+## 3. Weitere Anforderungen
+
+- Protokollierung jedes Aufrufs je Identität, insbesondere jedes `send_mail` (Empfänger, Betreff, Zeitpunkt).
+- Tokens nicht per E-Mail oder Chat übermitteln, sondern persönlich übergeben.
+- Sperrweg je Token dokumentieren (z. B. bei Austritt oder Geräteverlust).
+- Rückfrage: Für Edgard Schröder je Rechner (AGENT007, Eddy_NUC) ein eigenes Token derselben Identität möglich?
+- Bitte melden, wenn die Umstellung live ist. **Erst danach** wird die Bridge auf den Arbeitsplätzen gepatcht –
+  umgekehrt fällt der Connector aus (Störung vom 09.10.2026: Bridge erwartete Schreibwerkzeuge,
+  Server bot nur Lesewerkzeuge → „Unexpected HGI tool set“).
+
+## 4. Rückmeldung an Edgard Schröder
+
+- Umstellung live seit: `[•]`
+- Werkzeugliste je Identität (Ausgabe `tools/list`): `[•]`
+- Tokens übergeben an: `[•]`

@@ -1,6 +1,6 @@
 # Claude-Connector `hgi-datenbank-readonly` – Einrichtung je Arbeitsplatz
 
-> Hinweis: Der Name „readonly“ bleibt aus technischen Gründen. Über den Connector sind Lesen, das Anlegen/Ändern eigener Wissenseinträge und (nach Server-Umstellung) Outlook-Entwürfe im Postfach info@hgi-immobilien.de möglich, sonst nichts.
+> Hinweis: Der Name „readonly“ ist historisch und stimmt nach der Umstellung nicht mehr. Über den Connector sind dann Lesen **und Schreiben** möglich: Wissenseinträge, Tickets, Kalendertermine und **E-Mail-Direktversand** über info@hgi-immobilien.de. Umbenennung z. B. in `hgi-plattform` empfohlen `[•]`.
 
 Stand: 09.10.2026 · Variante A (lokaler Connector pro PC, nur Büronetz/VPN) · Entscheidung Edgard Schröder
 
@@ -29,14 +29,12 @@ Namen und Identitäten von Edgard Schröder am 09.10.2026 bestätigt.
 
 ## Grundsätze
 
-- Lesewerkzeuge plus Wissenseintrag: Alle Identitäten erhalten dieselben 16 Lesewerkzeuge und zusätzlich
-  `save_knowledge` und `update_own_knowledge` (Entscheidung Edgard Schröder, 09.10.2026: jeder darf
-  Einträge in der Wissensdatenbank anlegen).
-- Outlook (Entscheidung 09.10.2026): alle vier dürfen E-Mails über info@hgi-immobilien.de vorbereiten,
-  aber nur als **Entwurf**; gesendet wird immer von einem Menschen in Outlook. Kein `send_mail`.
-  Werkzeugname des Entwurfswerkzeugs `[•]` kommt von Herrn Kreker/Codex; Bridge dann mit
-  `-ZusatzWerkzeuge '<name>'` patchen. Keine Ticket- oder Kalender-Schreibrechte.
-  Die Werkzeugliste muss für alle Identitäten exakt gleich sein, sonst lehnt die Bridge ab.
+- Rechte (Entscheidung Edgard Schröder, 09.10.2026), für alle vier identisch: 16 Lesewerkzeuge plus
+  `save_knowledge`, `update_own_knowledge`, `create_ticket`, `update_ticket`, `send_mail`
+  (Absender info@hgi-immobilien.de), `create_calendar_event` – 22 Werkzeuge. Umsetzung auf dem Server
+  durch Codex, siehe `anfrage-server-zugaenge.md`. Die Liste muss für alle exakt gleich sein.
+- Empfehlung je Arbeitsplatz: In Claude Desktop für `send_mail`, `create_ticket`, `update_ticket` und
+  `create_calendar_event` die Berechtigung auf „Immer fragen“ lassen, damit jeder Versand einzeln bestätigt wird.
 - Jede Identität ändert nur ihre eigenen Einträge; jede Änderung erzeugt eine Historienversion.
   Einträge bleiben ZUR PRÜFUNG, bis ein anderer Prüfer sie freigibt.
 - Reihenfolge zwingend: **erst** Server umstellen, **dann** Bridge mit `-MitWissensEintrag` patchen.
@@ -48,9 +46,9 @@ Namen und Identitäten von Edgard Schröder am 09.10.2026 bestätigt.
 
 ## Ablauf
 
-1. **Server (Codex bzw. Herr Kreker):** Identitäten anlegen, siehe `anfrage-server-zugaenge.md`.
+1. **Server (Codex):** Identitäten anlegen, siehe `anfrage-server-zugaenge.md`.
 2. **Bridge patchen (einmal, auf AGENT007):** erst nach Rückmeldung, dass der Server umgestellt ist:
-   `Patch-Bridge-Agenten.ps1 -MitWissensEintrag -ZusatzWerkzeuge '<Entwurfswerkzeug>' -Trockenlauf`,
+   `Patch-Bridge-Agenten.ps1 -MitWissensEintrag -ZusatzWerkzeuge create_ticket,update_ticket,send_mail,create_calendar_event -Trockenlauf`,
    dann ohne `-Trockenlauf`.
    Danach akzeptiert die Bridge die vier Identitäten und die beiden Wissens-Werkzeuge.
    Funktionstest wie in Schritt 4 auf AGENT007, bevor die Bridge verteilt wird.
