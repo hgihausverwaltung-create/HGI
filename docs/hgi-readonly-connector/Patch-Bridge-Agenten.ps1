@@ -6,11 +6,16 @@
     über die Freigabe an die übrigen Arbeitsplätze verteilt.
   - Legt vorher eine Sicherung an, ändert nur die Agentenprüfung,
     die Prüfung von Endpunkt, Zertifikat und Werkzeugliste bleibt unverändert.
+  - Mit -MitWissensEintrag werden zusätzlich 'save_knowledge' und 'update_own_knowledge'
+    in ALLOWED_TOOLS aufgenommen (Entscheidung Edgard 09.10.2026: jeder darf Wissenseinträge anlegen).
+    ERST ausführen, wenn der Server diese beiden Werkzeuge für ALLE Identitäten freigeschaltet hat –
+    sonst lehnt die Bridge ab ("Unexpected HGI tool set") und der Connector fällt aus.
   - Mit -Trockenlauf wird nur angezeigt, was geändert würde.
-  Stand: 09.10.2026
+  Stand: 09.10.2026 (Wissenseintrag ergänzt)
 #>
 param(
     [string]$Bridge = 'C:\ProgramData\HGI-Claude-Readonly\hgi_readonly_bridge.py',
+    [switch]$MitWissensEintrag,
     [switch]$Trockenlauf
 )
 $ErrorActionPreference = 'Stop'
@@ -29,21 +34,37 @@ $nl   = if ($text.Contains("`r`n")) { "`r`n" } else { "`n" }
 $alt = "config.get('agent')!='claude-readonly'"
 $neu = "config.get('agent') not in ALLOWED_AGENTS"
 
-if ($text.Contains('ALLOWED_AGENTS')) { Write-Host 'Bridge ist bereits gepatcht - nichts zu tun.'; return }
-if (-not $text.Contains($alt))        { throw "Erwartete Zeile nicht gefunden: $alt - Bridge weicht ab, bitte nicht patchen." }
-if (-not $text.Contains('def connector(')) { throw "'def connector(' nicht gefunden - Bridge weicht ab." }
+$text2 = $text
+$block = ''
+if ($text.Contains('ALLOWED_AGENTS')) {
+    Write-Host 'Agentenpruefung ist bereits gepatcht.'
+} else {
+    if (-not $text.Contains($alt))             { throw "Erwartete Zeile nicht gefunden: $alt - Bridge weicht ab, bitte nicht patchen." }
+    if (-not $text.Contains('def connector(')) { throw "'def connector(' nicht gefunden - Bridge weicht ab." }
+    $liste = ($Agenten | ForEach-Object { "'$_'" }) -join ','
+    $block = "ALLOWED_AGENTS={$liste}$nl$nl"
+    $text2 = $text2.Replace($alt, $neu)
+    $text2 = $text2.Insert($text2.IndexOf('def connector('), $block)
+}
 
-$liste = ($Agenten | ForEach-Object { "'$_'" }) -join ','
-$block = "ALLOWED_AGENTS={$liste}$nl$nl"
+$wissen = ''
+if ($MitWissensEintrag) {
+    if ($text2.Contains("'save_knowledge'")) {
+        Write-Host 'Wissens-Werkzeuge sind bereits in ALLOWED_TOOLS.'
+    } else {
+        $m = [regex]::Match($text2, "(?s)ALLOWED_TOOLS=\{.*?\}")
+        if (-not $m.Success) { throw 'ALLOWED_TOOLS nicht gefunden - Bridge weicht ab.' }
+        $wissen = "    'save_knowledge','update_own_knowledge',$nl"
+        $text2  = $text2.Insert($m.Index + $m.Length - 1, $wissen)
+    }
+}
 
-$text2 = $text.Replace($alt, $neu)
-$idx   = $text2.IndexOf('def connector(')
-$text2 = $text2.Insert($idx, $block)
+if ($text2 -eq $text) { Write-Host 'Nichts zu tun.'; return }
 
 if ($Trockenlauf) {
     Write-Host "TROCKENLAUF - es wird nichts geschrieben." -ForegroundColor Yellow
-    Write-Host "Neu eingefuegt vor 'def connector(':"; Write-Host $block
-    Write-Host "Ersetzt:  $alt"; Write-Host "durch:    $neu"
+    if ($block)  { Write-Host "Neu vor 'def connector(':"; Write-Host $block; Write-Host "Ersetzt:  $alt"; Write-Host "durch:    $neu" }
+    if ($wissen) { Write-Host "In ALLOWED_TOOLS ergaenzt:"; Write-Host $wissen }
     return
 }
 

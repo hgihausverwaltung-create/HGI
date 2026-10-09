@@ -1,5 +1,7 @@
 # Claude-Connector `hgi-datenbank-readonly` – Einrichtung je Arbeitsplatz
 
+> Hinweis: Der Name „readonly“ bleibt aus technischen Gründen. Über den Connector sind Lesen und das Anlegen/Ändern eigener Wissenseinträge möglich, sonst nichts.
+
 Stand: 09.10.2026 · Variante A (lokaler Connector pro PC, nur Büronetz/VPN) · Entscheidung Edgard Schröder
 
 ## Hintergrund
@@ -27,8 +29,14 @@ Namen und Identitäten von Edgard Schröder am 09.10.2026 bestätigt.
 
 ## Grundsätze
 
-- Nur Lesewerkzeuge. Jede Identität erhält auf dem Server genau dieselben 16 Werkzeuge wie `claude-readonly`,
-  sonst lehnt die Bridge ab.
+- Lesewerkzeuge plus Wissenseintrag: Alle Identitäten erhalten dieselben 16 Lesewerkzeuge und zusätzlich
+  `save_knowledge` und `update_own_knowledge` (Entscheidung Edgard Schröder, 09.10.2026: jeder darf
+  Einträge in der Wissensdatenbank anlegen). Keine Ticket-, Mail- oder Kalender-Schreibrechte.
+  Die Werkzeugliste muss für alle Identitäten exakt gleich sein, sonst lehnt die Bridge ab.
+- Jede Identität ändert nur ihre eigenen Einträge; jede Änderung erzeugt eine Historienversion.
+  Einträge bleiben ZUR PRÜFUNG, bis ein anderer Prüfer sie freigibt.
+- Reihenfolge zwingend: **erst** Server umstellen, **dann** Bridge mit `-MitWissensEintrag` patchen.
+  Umgekehrt fällt der Connector aus (genau die Störung vom 09.10.2026).
 - Kein gemeinsames Token. Jede Person bekommt ein eigenes Token; es wird persönlich übergeben,
   nie per E-Mail, Chat oder in Dokumenten.
 - Die Prüfungen der Bridge (Endpunkt, Zertifikat, Werkzeugliste) bleiben unverändert.
@@ -37,8 +45,10 @@ Namen und Identitäten von Edgard Schröder am 09.10.2026 bestätigt.
 ## Ablauf
 
 1. **Server (Codex bzw. Herr Kreker):** Identitäten anlegen, siehe `anfrage-server-zugaenge.md`.
-2. **Bridge patchen (einmal, Referenz-PC):** `Patch-Bridge-Agenten.ps1 -Trockenlauf`, dann ohne Schalter.
-   Danach akzeptiert die Bridge die vier Identitäten aus der Tabelle.
+2. **Bridge patchen (einmal, auf AGENT007):** erst nach Rückmeldung, dass der Server umgestellt ist:
+   `Patch-Bridge-Agenten.ps1 -MitWissensEintrag -Trockenlauf`, dann ohne `-Trockenlauf`.
+   Danach akzeptiert die Bridge die vier Identitäten und die beiden Wissens-Werkzeuge.
+   Funktionstest wie in Schritt 4 auf AGENT007, bevor die Bridge verteilt wird.
 3. **Freigabeordner befüllen** (`[•]` Ort festlegen, nur für Administratoren lesbar):
    gepatchte `hgi_readonly_bridge.py` und `HGI_Server_Zertifikat.crt`. **Keine** `access.json`.
 4. **Je Arbeitsplatz** (PowerShell als Administrator, angemeldet als der Mitarbeiter):
