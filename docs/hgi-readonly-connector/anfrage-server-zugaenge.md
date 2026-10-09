@@ -1,6 +1,6 @@
 # Anfrage an Codex / Herrn Kreker – persönliche Lesezugänge für die Agenten-API
 
-**Betreff:** HGI-Plattform – Agenten-API – drei persönliche Claude-Zugänge (Lesen + Wissenseintrag)
+**Betreff:** HGI-Plattform – Agenten-API – drei persönliche Claude-Zugänge (Lesen, Wissenseintrag, Outlook-Entwürfe)
 
 Guten Tag Herr Kreker,
 
@@ -19,11 +19,21 @@ der HGI Immobilien GmbH mit jeweils eigener Identität auf die Agenten-API
    `ticket_attachment_status`, `ticket_history`)
    **plus** die beiden Wissens-Werkzeuge `save_knowledge` und `update_own_knowledge`.
    Jeder Mitarbeiter soll Einträge in der Wissensdatenbank anlegen und seine eigenen Einträge
-   ändern können (Entscheidung Herr Schröder, 09.10.2026). Darüber hinaus keine Schreibwerkzeuge
-   (kein `create_ticket`, `update_ticket`, `send_mail`, `create_calendar_event`).
+   ändern können (Entscheidung Herr Schröder, 09.10.2026).
+2b. **Outlook – Entwürfe statt Direktversand** (Entscheidung Herr Schröder, 09.10.2026):
+   Alle vier Identitäten sollen E-Mails über das Postfach **info@hgi-immobilien.de** vorbereiten
+   können, und zwar ausschließlich als **Entwurf im Outlook-Postfach**. Den Versand löst
+   immer ein Mitarbeiter selbst in Outlook aus.
+   - Bitte ein Werkzeug für das Anlegen von Entwürfen bereitstellen (z. B. `create_mail_draft`)
+     und uns den genauen Werkzeugnamen mitteilen.
+   - Das vorhandene `send_mail` (Direktversand) bitte **nicht** freischalten.
+   - Lesen: Bitte bestätigen, ob `search_mail`/`get_mail` das Outlook-Postfach
+     info@hgi-immobilien.de (Eingang und Ausgang) vollständig abdecken oder nur importierte Info-E-Mails.
+   - Anlagen in Entwürfen: Bitte mitteilen, ob Dokumente (z. B. per Dokumentnachweis-ID) angehängt werden können.
+   Darüber hinaus keine Schreibwerkzeuge (kein `create_ticket`, `update_ticket`, `create_calendar_event`).
    Die Werkzeugliste muss für alle Identitäten exakt gleich sein, da die Bridge jede Abweichung ablehnt.
 2a. **Auch für die bestehende Identität `claude-readonly`** bitte `save_knowledge` und
-   `update_own_knowledge` freischalten, sodass alle vier Identitäten dieselben 18 Werkzeuge erhalten.
+   `update_own_knowledge` freischalten, sodass alle vier Identitäten dieselben Werkzeuge erhalten (16 Lesewerkzeuge, 2 Wissens-Werkzeuge, 1 Entwurfswerkzeug).
    Bitte kurz Bescheid geben, sobald das umgestellt ist – erst danach passen wir die Bridge an,
    sonst fällt der Connector aus.
 3. **Protokollierung** der Abrufe je Identität.
@@ -34,8 +44,8 @@ der HGI Immobilien GmbH mit jeweils eigener Identität auf die Agenten-API
 6. **Hinweis:** Die Bridge auf Herrn Schröders Rechner erwartete bis zum 09.10.2026 zusätzlich
    Schreibwerkzeuge (`save_knowledge`, `create_ticket`, `send_mail` u. a.), die der Server nicht
    mehr anbot; der Connector war dadurch ausgefallen. Bitte kurz bestätigen, ob die Rücknahme
-   serverseitig beabsichtigt war. Ticket-, Mail- und Kalender-Schreibrechte sollen weiterhin
-   **nicht** freigeschaltet werden.
+   serverseitig beabsichtigt war. Direktversand (`send_mail`), Ticket- und Kalender-Schreibrechte
+   sollen weiterhin **nicht** freigeschaltet werden.
 
 Mit freundlichen Grüßen
 

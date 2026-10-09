@@ -1,6 +1,6 @@
 # Claude-Connector `hgi-datenbank-readonly` – Einrichtung je Arbeitsplatz
 
-> Hinweis: Der Name „readonly“ bleibt aus technischen Gründen. Über den Connector sind Lesen und das Anlegen/Ändern eigener Wissenseinträge möglich, sonst nichts.
+> Hinweis: Der Name „readonly“ bleibt aus technischen Gründen. Über den Connector sind Lesen, das Anlegen/Ändern eigener Wissenseinträge und (nach Server-Umstellung) Outlook-Entwürfe im Postfach info@hgi-immobilien.de möglich, sonst nichts.
 
 Stand: 09.10.2026 · Variante A (lokaler Connector pro PC, nur Büronetz/VPN) · Entscheidung Edgard Schröder
 
@@ -31,7 +31,11 @@ Namen und Identitäten von Edgard Schröder am 09.10.2026 bestätigt.
 
 - Lesewerkzeuge plus Wissenseintrag: Alle Identitäten erhalten dieselben 16 Lesewerkzeuge und zusätzlich
   `save_knowledge` und `update_own_knowledge` (Entscheidung Edgard Schröder, 09.10.2026: jeder darf
-  Einträge in der Wissensdatenbank anlegen). Keine Ticket-, Mail- oder Kalender-Schreibrechte.
+  Einträge in der Wissensdatenbank anlegen).
+- Outlook (Entscheidung 09.10.2026): alle vier dürfen E-Mails über info@hgi-immobilien.de vorbereiten,
+  aber nur als **Entwurf**; gesendet wird immer von einem Menschen in Outlook. Kein `send_mail`.
+  Werkzeugname des Entwurfswerkzeugs `[•]` kommt von Herrn Kreker/Codex; Bridge dann mit
+  `-ZusatzWerkzeuge '<name>'` patchen. Keine Ticket- oder Kalender-Schreibrechte.
   Die Werkzeugliste muss für alle Identitäten exakt gleich sein, sonst lehnt die Bridge ab.
 - Jede Identität ändert nur ihre eigenen Einträge; jede Änderung erzeugt eine Historienversion.
   Einträge bleiben ZUR PRÜFUNG, bis ein anderer Prüfer sie freigibt.
@@ -46,7 +50,8 @@ Namen und Identitäten von Edgard Schröder am 09.10.2026 bestätigt.
 
 1. **Server (Codex bzw. Herr Kreker):** Identitäten anlegen, siehe `anfrage-server-zugaenge.md`.
 2. **Bridge patchen (einmal, auf AGENT007):** erst nach Rückmeldung, dass der Server umgestellt ist:
-   `Patch-Bridge-Agenten.ps1 -MitWissensEintrag -Trockenlauf`, dann ohne `-Trockenlauf`.
+   `Patch-Bridge-Agenten.ps1 -MitWissensEintrag -ZusatzWerkzeuge '<Entwurfswerkzeug>' -Trockenlauf`,
+   dann ohne `-Trockenlauf`.
    Danach akzeptiert die Bridge die vier Identitäten und die beiden Wissens-Werkzeuge.
    Funktionstest wie in Schritt 4 auf AGENT007, bevor die Bridge verteilt wird.
    Eddy_NUC hat eine eigene Kopie der Bridge: dort denselben Patch ausführen (oder die gepatchte Bridge

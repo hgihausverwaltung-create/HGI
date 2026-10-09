@@ -10,12 +10,16 @@
     in ALLOWED_TOOLS aufgenommen (Entscheidung Edgard 09.10.2026: jeder darf Wissenseinträge anlegen).
     ERST ausführen, wenn der Server diese beiden Werkzeuge für ALLE Identitäten freigeschaltet hat –
     sonst lehnt die Bridge ab ("Unexpected HGI tool set") und der Connector fällt aus.
+  - Mit -ZusatzWerkzeuge 'name1','name2' werden weitere, vom Server bestätigte Werkzeuge ergänzt
+    (z. B. das Outlook-Entwurfswerkzeug, sobald Herr Kreker/Codex den genauen Namen mitteilt).
+    Gleiche Regel: erst Server, dann Bridge.
   - Mit -Trockenlauf wird nur angezeigt, was geändert würde.
   Stand: 09.10.2026 (Wissenseintrag ergänzt)
 #>
 param(
     [string]$Bridge = 'C:\ProgramData\HGI-Claude-Readonly\hgi_readonly_bridge.py',
     [switch]$MitWissensEintrag,
+    [ValidatePattern('^[a-z_]+$')][string[]]$ZusatzWerkzeuge = @(),
     [switch]$Trockenlauf
 )
 $ErrorActionPreference = 'Stop'
@@ -47,16 +51,18 @@ if ($text.Contains('ALLOWED_AGENTS')) {
     $text2 = $text2.Insert($text2.IndexOf('def connector('), $block)
 }
 
+$gewuenscht = @()
+if ($MitWissensEintrag) { $gewuenscht += 'save_knowledge','update_own_knowledge' }
+$gewuenscht += $ZusatzWerkzeuge
+$fehlend = @($gewuenscht | Select-Object -Unique | Where-Object { -not $text2.Contains("'$_'") })
 $wissen = ''
-if ($MitWissensEintrag) {
-    if ($text2.Contains("'save_knowledge'")) {
-        Write-Host 'Wissens-Werkzeuge sind bereits in ALLOWED_TOOLS.'
-    } else {
-        $m = [regex]::Match($text2, "(?s)ALLOWED_TOOLS=\{.*?\}")
-        if (-not $m.Success) { throw 'ALLOWED_TOOLS nicht gefunden - Bridge weicht ab.' }
-        $wissen = "    'save_knowledge','update_own_knowledge',$nl"
-        $text2  = $text2.Insert($m.Index + $m.Length - 1, $wissen)
-    }
+if ($fehlend.Count -gt 0) {
+    $m = [regex]::Match($text2, "(?s)ALLOWED_TOOLS=\{.*?\}")
+    if (-not $m.Success) { throw 'ALLOWED_TOOLS nicht gefunden - Bridge weicht ab.' }
+    $wissen = '    ' + (($fehlend | ForEach-Object { "'$_'" }) -join ',') + ",$nl"
+    $text2  = $text2.Insert($m.Index + $m.Length - 1, $wissen)
+} elseif ($gewuenscht.Count -gt 0) {
+    Write-Host 'Gewuenschte Werkzeuge sind bereits in ALLOWED_TOOLS.'
 }
 
 if ($text2 -eq $text) { Write-Host 'Nichts zu tun.'; return }
