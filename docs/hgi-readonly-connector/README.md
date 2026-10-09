@@ -48,6 +48,9 @@ Namen und Identitäten von Edgard Schröder am 09.10.2026 bestätigt.
 ## Ablauf
 
 1. **Server (Codex):** Identitäten anlegen, siehe `anfrage-server-zugaenge.md`.
+   Auftrag abgelegt am 09.10.2026 unter
+   `\\Hgi-7\hgi-daten\HGI-Digitale Hausverwaltung\2026-10-09_HGI-Plattform_Auftrag-Codex_Claude-Zugaenge.md`.
+   Hinweis: In einer Administrator-PowerShell ist `Z:` nicht verbunden – UNC-Pfad verwenden.
 2. **Bridge patchen (einmal, auf AGENT007):** erst nach Rückmeldung, dass der Server umgestellt ist:
    `Patch-Bridge-Agenten.ps1 -MitWissensEintrag -ZusatzWerkzeuge create_ticket,update_ticket,send_mail,create_calendar_event,<Entwurfswerkzeug> -Trockenlauf`,
    dann ohne `-Trockenlauf`.
