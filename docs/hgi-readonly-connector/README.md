@@ -1,6 +1,6 @@
 # Claude-Connector `hgi-datenbank-readonly` – Einrichtung je Arbeitsplatz
 
-> Hinweis: Der Name „readonly“ ist historisch und stimmt nach der Umstellung nicht mehr. Über den Connector sind dann Lesen **und Schreiben** möglich: Wissenseinträge, Tickets, Kalendertermine und **E-Mail-Direktversand** über info@hgi-immobilien.de. Umbenennung z. B. in `hgi-plattform` empfohlen `[•]`.
+> Hinweis: Der Name „readonly“ ist historisch und stimmt nach der Umstellung nicht mehr. Über den Connector sind dann Lesen **und Schreiben** möglich: Wissenseinträge, Tickets, Kalendertermine und **E-Mail-Direktversand** sowie Outlook-Entwürfe mit Anhängen über info@hgi-immobilien.de. Umbenennung z. B. in `hgi-plattform` empfohlen `[•]`.
 
 Stand: 09.10.2026 · Variante A (lokaler Connector pro PC, nur Büronetz/VPN) · Entscheidung Edgard Schröder
 
@@ -31,7 +31,8 @@ Namen und Identitäten von Edgard Schröder am 09.10.2026 bestätigt.
 
 - Rechte (Entscheidung Edgard Schröder, 09.10.2026), für alle vier identisch: 16 Lesewerkzeuge plus
   `save_knowledge`, `update_own_knowledge`, `create_ticket`, `update_ticket`, `send_mail`
-  (Absender info@hgi-immobilien.de), `create_calendar_event` – 22 Werkzeuge. Umsetzung auf dem Server
+  (Absender info@hgi-immobilien.de), `create_calendar_event` sowie ein neues Werkzeug für
+  **Outlook-Entwürfe mit Anhängen** im Postfach info@ (Name `[•]` von Codex) – 23 Werkzeuge. Umsetzung auf dem Server
   durch Codex, siehe `anfrage-server-zugaenge.md`. Die Liste muss für alle exakt gleich sein.
 - Empfehlung je Arbeitsplatz: In Claude Desktop für `send_mail`, `create_ticket`, `update_ticket` und
   `create_calendar_event` die Berechtigung auf „Immer fragen“ lassen, damit jeder Versand einzeln bestätigt wird.
@@ -48,7 +49,7 @@ Namen und Identitäten von Edgard Schröder am 09.10.2026 bestätigt.
 
 1. **Server (Codex):** Identitäten anlegen, siehe `anfrage-server-zugaenge.md`.
 2. **Bridge patchen (einmal, auf AGENT007):** erst nach Rückmeldung, dass der Server umgestellt ist:
-   `Patch-Bridge-Agenten.ps1 -MitWissensEintrag -ZusatzWerkzeuge create_ticket,update_ticket,send_mail,create_calendar_event -Trockenlauf`,
+   `Patch-Bridge-Agenten.ps1 -MitWissensEintrag -ZusatzWerkzeuge create_ticket,update_ticket,send_mail,create_calendar_event,<Entwurfswerkzeug> -Trockenlauf`,
    dann ohne `-Trockenlauf`.
    Danach akzeptiert die Bridge die vier Identitäten und die beiden Wissens-Werkzeuge.
    Funktionstest wie in Schritt 4 auf AGENT007, bevor die Bridge verteilt wird.

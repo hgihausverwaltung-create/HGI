@@ -26,7 +26,16 @@ vier Mitarbeiter der HGI Immobilien GmbH mit jeweils eigener Identität und eige
 - **Schreiben (6):** `save_knowledge`, `update_own_knowledge`, `create_ticket`, `update_ticket`,
   `send_mail` (Absender **info@hgi-immobilien.de**), `create_calendar_event`
 
-Die Werkzeugliste muss für alle vier exakt gleich sein (22 Werkzeuge), da die Bridge jede Abweichung ablehnt.
+- **Neu (1): Outlook-Entwurf mit Anhängen**, z. B. `create_mail_draft` – genauen Namen bitte mitteilen:
+  - legt einen Entwurf im Outlook-Postfach **info@hgi-immobilien.de** an (Ordner „Entwürfe“),
+    der dort von einem Mitarbeiter geprüft und gesendet werden kann;
+  - **Anhänge sind Pflicht-Funktion:** Dokumente per Dokumentnachweis-ID (wie `get_document`) und
+    Ticket-Anlagen (wie `ticket_attachment_status`) müssen sich anhängen lassen; die Größenbegrenzung
+    von `get_document` (2 MiB) darf dafür nicht gelten, da die Datei serverseitig angehängt wird;
+  - Rückgabe: Entwurfs-ID, Empfänger, Betreff, Liste der angehängten Dateien mit Dateihash.
+- `send_mail` ebenfalls mit Anhängen nach demselben Verfahren.
+
+Die Werkzeugliste muss für alle vier exakt gleich sein (23 Werkzeuge), da die Bridge jede Abweichung ablehnt.
 WinCasa-Tabellen bleiben nur lesend.
 
 ## 3. Weitere Anforderungen
@@ -43,4 +52,5 @@ WinCasa-Tabellen bleiben nur lesend.
 
 - Umstellung live seit: `[•]`
 - Werkzeugliste je Identität (Ausgabe `tools/list`): `[•]`
+- Name des Entwurfswerkzeugs: `[•]`
 - Tokens übergeben an: `[•]`
