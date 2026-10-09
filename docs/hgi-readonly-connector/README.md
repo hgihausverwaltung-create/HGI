@@ -22,7 +22,7 @@ Namen und Identitäten von Edgard Schröder am 09.10.2026 bestätigt.
 | Person | Agent-Identität (Server) | Rechner | Stand |
 |---|---|---|---|
 | Edgard Schröder | `claude-readonly` (bestehend) | AGENT007 (virtuell) | läuft, repariert am 09.10.2026 |
-| Edgard Schröder | `claude-readonly` (bestehend) | Eddy_NUC | noch einzurichten (Installationsskript) |
+| Edgard Schröder | `claude-readonly` (bestehend) | Eddy_NUC | läuft (Stand 09.10.2026) |
 | Leon Schröder | `claude-leon-schroeder` | `[•]` | Server-Zugang fehlt |
 | Inna Görz | `claude-inna-goerz` | `[•]` | Server-Zugang fehlt |
 | Marina Korotaev | `claude-marina-korotaev` | `[•]` | Server-Zugang fehlt |
@@ -49,6 +49,8 @@ Namen und Identitäten von Edgard Schröder am 09.10.2026 bestätigt.
    `Patch-Bridge-Agenten.ps1 -MitWissensEintrag -Trockenlauf`, dann ohne `-Trockenlauf`.
    Danach akzeptiert die Bridge die vier Identitäten und die beiden Wissens-Werkzeuge.
    Funktionstest wie in Schritt 4 auf AGENT007, bevor die Bridge verteilt wird.
+   Eddy_NUC hat eine eigene Kopie der Bridge: dort denselben Patch ausführen (oder die gepatchte Bridge
+   aus dem Freigabeordner übernehmen), sonst fällt der Connector auf Eddy_NUC nach der Server-Umstellung aus.
 3. **Freigabeordner befüllen** (`[•]` Ort festlegen, nur für Administratoren lesbar):
    gepatchte `hgi_readonly_bridge.py` und `HGI_Server_Zertifikat.crt`. **Keine** `access.json`.
 4. **Je Arbeitsplatz** (PowerShell als Administrator, angemeldet als der Mitarbeiter):
