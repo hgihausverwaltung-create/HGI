@@ -15,9 +15,12 @@ Fehlerbehebung vom 09.10.2026: Die Bridge erwartete 6 Schreibwerkzeuge, die der 
 
 ## Personen, Agenten-Identitäten, Rechner
 
+Namen und Identitäten von Edgard Schröder am 09.10.2026 bestätigt.
+
 | Person | Agent-Identität (Server) | Rechner | Stand |
 |---|---|---|---|
-| Edgard Schröder | `claude-readonly` (bestehend) | Eddy_NUC und AGENT007 (virtuell) | `[•]` auf welchem der beiden am 09.10.2026 repariert, offen |
+| Edgard Schröder | `claude-readonly` (bestehend) | AGENT007 (virtuell) | läuft, repariert am 09.10.2026 |
+| Edgard Schröder | `claude-readonly` (bestehend) | Eddy_NUC | noch einzurichten (Installationsskript) |
 | Leon Schröder | `claude-leon-schroeder` | `[•]` | Server-Zugang fehlt |
 | Inna Görz | `claude-inna-goerz` | `[•]` | Server-Zugang fehlt |
 | Marina Korotaev | `claude-marina-korotaev` | `[•]` | Server-Zugang fehlt |
