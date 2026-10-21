@@ -1,26 +1,80 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Arbeitsanweisungen für Claude Code und andere Entwicklungsassistenten.
 
-## Repository purpose
+## Repository und Entwicklungsstände
 
-This is not a software project — there is no build system, package manifest, source code, or test suite. The repository is a documentation store for a single artifact: the "Executive Master Prompt" used to configure an AI assistant for **HGI Immobilien GmbH**, a German property management company (Hausverwaltung) run by Edgard Schröder.
+Dieses Repository enthält die **HGI Protokoll-App** und fachliche Dokumentation für
+die HGI Immobilien GmbH. Es ist ein Softwareprojekt mit Build-System und Tests.
+Die frühere Beschreibung als reiner Dokumentenspeicher ist überholt.
 
-Repository contents:
+Vor Änderungen den tatsächlich ausgecheckten Zweig und seinen Inhalt prüfen.
+Der Standardzweig heißt derzeit `claude/new-session-udlv7n`.
+Eine Übersicht der separaten Entwicklungslinien steht in [docs/projektstand.md](docs/projektstand.md).
+Offene Pull Requests gelten nicht als integriert oder produktiv installiert.
 
-- `docs/executive-master-prompt.md` — the master system prompt. It defines the persona, tone, and domain rules the AI assistant must follow when helping with WEG-Verwaltung (condominium/HOA management), Mietverwaltung (rental management), accounting, financing, and business development tasks for the company.
+## Aufbau des Standardzweigs
 
-There are no commands to build, lint, or test — work in this repo consists of editing and extending the prompt document(s).
+- `apps/api`: Fastify, tRPC, Prisma/PostgreSQL, Authentifizierung, Uploads und Versandabläufe.
+- `apps/web`: React/Vite-Oberfläche.
+- `packages/form-schema`: Zod-basierte Formular- und Antwortvalidierung.
+- `packages/form-renderer`: React-Web-Renderer; nicht ungeprüft als nativen Mobile-Renderer verwenden.
+- `packages/pdf`: PDF-Erstellung.
+- `packages/domain`, `packages/api-client`, `packages/config`: gemeinsame Bausteine.
+- `docs/executive-master-prompt.md`: fachliche HGI-Vorgaben.
 
-## Working with the master prompt document
+Mobile/Offline und die separate Anwendung `app-doku` liegen nicht im Standardzweig.
+Vor Arbeiten daran den passenden Branch und dessen eigene Anleitung prüfen.
 
-- The document is written entirely in **German** and addresses the reader informally as "du" while instructing the assistant to address third parties (tenants, owners, banks, authorities) formally with "Sie".
-- Content is organized into numbered `##` sections (currently 1–19, e.g. "3. Grundhaltung", "9. WEG-Verwaltung", "19. Signatur"). When adding new rules, extend with a new sequentially numbered section rather than overloading an existing one, and keep the numbering contiguous.
-- Section 19 defines a literal signature block (name, company, address, phone) that generated correspondence should close with — preserve its exact formatting (inside a fenced code block) if edited.
-- The prompt repeatedly emphasizes several non-negotiable behavioral rules that any edits should preserve:
-  - Never guess or fabricate facts, deadlines, dates, or figures (Section 5, 18) — surface missing information as explicit placeholders or ask for it instead of estimating.
-  - Distinguish clearly between established facts, assumptions, legal assessment, economic evaluation, and practical recommendation (Section 3).
-  - Cite the relevant legal basis where applicable (WEG, BGB, HeizkostenV, BetrKV, WoFlV, etc.) and flag whether legal/case-law information is current or outdated (Section 3); the assistant is explicitly not a substitute for a lawyer, tax advisor, or notary.
-  - Handle personal data (owners, tenants, Beirat members) sparingly and only share what a given recipient needs (Section 4).
-  - Any script that modifies production data (especially in WinCasa or idwell) must first be proposed as a dry run, with a reminder to back up data beforehand (Section 14).
-- When proposing changes to this document, keep the existing structure and voice intact rather than rewriting sections wholesale — this is a living configuration document, not prose to be freely restyled.
+## Entwicklung und Prüfung
+
+Node.js >= 20; Paketmanager laut Root-`package.json`: pnpm 10.33.0.
+PostgreSQL und lokale `.env`-Dateien sind für den Entwicklungsbetrieb erforderlich.
+Die Anleitung in [README.md](README.md) beachten.
+
+Verfügbare Root-Befehle:
+
+```bash
+pnpm install
+pnpm dev
+pnpm build
+pnpm typecheck
+pnpm lint
+pnpm test
+pnpm db:generate
+pnpm db:migrate
+pnpm db:seed
+```
+
+Nur zur Änderung passende Prüfungen ausführen. Erfolgreiche Prüfungen, Fehler und
+nicht ausgeführte Prüfungen getrennt berichten; frühere PR-Testberichte sind keine neuen Testergebnisse.
+`db:migrate` und `db:seed` verändern eine Datenbank. Für Entwicklung eine separate
+Testdatenbank verwenden und niemals ungeprüft gegen die HGI-Produktivdatenbank ausführen.
+
+## Grenzen der aktuellen Implementierung
+
+- Authentifizierung ist eine eigene lokale Implementierung, kein belegter Supabase-Auth-Betrieb.
+- Dateien liegen lokal unter `apps/api/storage/files`.
+- `apps/api/src/lib/email.ts` schreibt JSON-Dateien nach `storage/outbox`.
+  Ein erfolgreicher Aufruf oder ein „gesendet“-Status bedeutet hier keine tatsächliche Zustellung.
+- Datenbankmodelle und Importskripte belegen weder eine produktive Datenübernahme noch eine Live-Schnittstelle.
+- Testzugänge aus dem Seed sind ausschließlich für lokale Entwicklung vorgesehen.
+- Keine Zugangsdaten, Tokens, `.env`-Dateien oder personenbezogenen Exporte in das Repository einchecken.
+
+## Arbeit am Executive Master Prompt
+
+- Das Dokument ist deutsch. Es spricht den Assistenten mit „du“ an;
+  Korrespondenz an Dritte verwendet grundsätzlich „Sie“.
+- Die bestehende Nummerierung der Abschnitte erhalten; neue Abschnitte fortlaufend ergänzen.
+- Abschnitt 19 enthält die Signatur als wörtlichen Block. Format und Inhalt bei
+  fachfremden Änderungen erhalten.
+- Keine Fakten, Beträge, Daten oder Fristen erfinden. Fehlende Angaben als Platzhalter
+  kennzeichnen oder gezielt erfragen.
+- Gesicherte Fakten, Annahmen, rechtliche Einordnung, wirtschaftliche Bewertung
+  und praktische Empfehlung klar unterscheiden.
+- Einschlägige Rechtsgrundlagen und Aktualität rechtlicher Aussagen kenntlich machen.
+  Der Assistent ersetzt keine Rechts-, Steuer- oder Notarberatung.
+- Personenbezogene Daten sparsam verwenden und nur erforderliche Angaben weitergeben.
+- Für Skripte mit Schreibzugriff auf Produktivdaten, insbesondere WinCasa/idwell,
+  zunächst einen Trockenlauf vorschlagen und auf vorherige Datensicherung hinweisen.
+- Struktur und Ton erhalten; nur aufgabenbezogene Änderungen vornehmen.
