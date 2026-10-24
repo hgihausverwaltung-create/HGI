@@ -137,8 +137,12 @@ type Klassifikation = {
 const SAMMELKONTEN = new Set([201, 300, 600, 990]);
 const TS_WS_KONTEN = new Set([900, 901, 903, 904, 950, 951]);
 const GESELLSCHAFT_NACH_NR = new Map<number, string>([
-  ...[200, 201, 206, 224, 225, 227, 255, 256, 286, 950, 951].map((nr): [number, string] => [nr, "HGI GmbH & Co. KG"]),
+  ...[200, 201, 206, 224, 225, 227, 255, 256, 286].map((nr): [number, string] => [nr, "HGI GmbH & Co. KG"]),
   [300, "HGI Immobilien GmbH"],
+  // WinCasa export-objekte_b.csv: OBJEKT-KONTOINHABER der WS-Konten 950/951 ist
+  // HGI Immobilien GmbH (nicht die KG, in deren Block die Quelle sie auflistet).
+  [950, "HGI Immobilien GmbH"],
+  [951, "HGI Immobilien GmbH"],
   // WinCasa export-objekte_b.csv, O_NR=500: Immoquelle GmbH c/o HGI Immobilien GmbH.
   // Die c/o-Verwalteranschrift ist nicht die Gesellschaft des Objekts.
   [500, "Immoquelle GmbH"],
