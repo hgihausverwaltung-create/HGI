@@ -28,6 +28,10 @@
  * Nr. 003 (Faerberweg 3, 33659 Bielefeld) fehlte im Export; Name von Edgard
  * Schroeder am 24.10.2026 bestaetigt, PLZ/Ort aus dem Drive-Ordner "WEG 003".
  *
+ * Nr. 072 (Queller Str. 72, 33649 Bielefeld) fehlte im Export; Strasse von
+ * Edgard Schroeder am 24.10.2026 bestaetigt, PLZ/Ort aus dem Drive-Ordner
+ * "WEG 072".
+ *
  * Nr. 87 (WEG Auf dem Busch 44-78) fehlte im Export und wurde am
  * 21.08.2026 von Edgard Schroeder nachgetragen - PLZ/Ort per Rueckfrage
  * bestaetigt (gleiche Strasse wie Nr. 2, 33699 Bielefeld).
@@ -110,6 +114,7 @@ const WEG_OBJEKTE: ObjektEintrag[] = [
   { nr: 55, name: "Beckendorfstr. 55", strasse: "Beckendorfstr. 55", plz: "33739", ort: "Bielefeld" },
   { nr: 57, name: "Jungbrunnenweg 71/73/75", strasse: "Jungbrunnenweg 71/73/75", plz: "33609", ort: "Bielefeld" },
   { nr: 69, name: "Mainweg 69A", strasse: "Mainweg 69A", plz: "33689", ort: "Bielefeld" },
+  { nr: 72, name: "Queller Str. 72", strasse: "Queller Str. 72", plz: "33649", ort: "Bielefeld" },
   { nr: 74, name: "Dornberger Strasse 274-276", strasse: "Dornberger Strasse 274-276", plz: "33619", ort: "Bielefeld" },
   { nr: 87, name: "Auf dem Busch 44-78", strasse: "Auf dem Busch 44-78", plz: "33699", ort: "Bielefeld" },
   { nr: 88, name: "Osnabruecker Str. 88", strasse: "Osnabruecker Str. 88", plz: "33649", ort: "Bielefeld" },
