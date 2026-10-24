@@ -45,7 +45,7 @@
  * die Strasse Osnabruecker Str. 49.
  *
  * PLZ-Pruefung 24.10.2026 (Claude, Gegenpruefung durch Edgard Schroeder offen):
- * - 015 Lange Str. 1: 32139 Spenge (Versicherungsschein "Lange Strasse 1, 32139
+ * - 015 Lange Str. 1: 32139 Spenge (Drive-Datei "V-Schein, Lange Strasse 1, 32139
  *   Spenge"; Strassenverzeichnisse). Die 32052 der Adressdatei ist falsch.
  * - 016 Loheide 16: 33609 (Anschrift der Eigentuemer und Angebot des Dachdeckers
  *   vom 27.09.2026, ImmoScout24/onlinestreet/dasoertliche). Die 33611 aus dem
