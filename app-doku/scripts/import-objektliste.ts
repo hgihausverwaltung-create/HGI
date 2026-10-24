@@ -44,18 +44,20 @@
  * Nr. 637 erhaelt die Hausnummer 37 (Juetlandstr. 37), Nr. 200 (Buerohaus HGI)
  * die Strasse Osnabruecker Str. 49.
  *
- * PLZ-Pruefung 24.10.2026 (Claude, Gegenpruefung durch Edgard Schroeder offen):
- * - 015 Lange Str. 1: 32139 Spenge (Drive-Datei "V-Schein, Lange Strasse 1, 32139
- *   Spenge"; Strassenverzeichnisse). Die 32052 der Adressdatei ist falsch.
- * - 016 Loheide 16: 33609 (Anschrift der Eigentuemer und Angebot des Dachdeckers
- *   vom 27.09.2026, ImmoScout24/onlinestreet/dasoertliche). Die 33611 aus dem
- *   WinCasa-Export und im Kopf der Vulcavo-Unterlagen ist abweichend.
+ * PLZ-Pruefung 24.10.2026 (Claude; unabhaengig durch Codex bestaetigt):
+ * - 015 Lange Str. 1: 32139 Spenge (Versicherungsschein, Seite 1 visuell gelesen,
+ *   Versicherungsort). Die 32052 der Adressdatei ist abweichend.
+ * - 016 Loheide 16: 33609 (Angebot des Dachdeckers vom 27.09.2026;
+ *   amtliche Strassenliste Finanzverwaltung NRW, Seite 51, gerade Nr. 4-44).
+ *   Der Umlaufbeschluss enthaelt sowohl 33611 im Kopf als auch 33609 im Text.
  * - 038 Guetersloher Str. 38A: 33649 (Strassenschluessel Finanzverwaltung NRW:
  *   Nr. 38 bis 384A = 33649, Nr. 2 bis 12 = 33647; Vulcavo-Stammdaten, Tickets).
- *   Der Ordnername "33647" und das Angebot von 2024 sind abweichend.
- * - 200 Osnabruecker Str. 49: 33649 (Kaufvertrag 04.09.2025 und Briefkopf der HGI;
- *   33749 gibt es in Bielefeld nicht).
- * Bei bereits importierten Objekten wird die PLZ nur mit --uebernehmen=16 geaendert.
+ *   Amtliche Strassenliste Seite 32; der Ordnername "33647" ist abweichend.
+ * - 200 Osnabruecker Str. 49: 33649 (PV-Kaufvertrag 04.09.2025;
+ *   amtliche Strassenliste Seite 60, ungerade Nr. 1-249).
+ * Die Quellsysteme und bestehende Ablageordner wurden dadurch nicht korrigiert.
+ * Bei bereits importierten Objekten wird die PLZ nur mit ausdruecklicher
+ * Objekt- UND Feldfreigabe geaendert: --ausfuehren --uebernehmen=16 --felder=plz.
  *
  * Nr. 87 (WEG Auf dem Busch 44-78) fehlte im Export und wurde am
  * 21.08.2026 von Edgard Schroeder nachgetragen - PLZ/Ort per Rueckfrage
@@ -66,14 +68,19 @@
  *
  * Anzeigename = Objektnummer dreistellig, dann Bezeichnung, ohne "WEG"
  * (Vorgabe Edgard Schroeder 24.10.2026), z. B. "012 Myrtenweg 12".
- * Bereits importierte Objekte erhalten den neuen Namen beim naechsten Lauf.
+ * Abweichende bestehende Namen werden nur mit --uebernehmen=<Nr> --felder=name
+ * geaendert. Ungeloeste Konflikte sperren den gesamten Schreiblauf.
  *
  * externeId = "wincasa-<Objektnummer dreistellig mit fuehrenden Nullen>",
  * z. B. wincasa-087, wie die Objektnummer in Paperless. Frueher importierte
  * Objekte mit der alten Schreibweise (wincasa-87) werden umbenannt, nicht
  * doppelt angelegt. Idempotent - mehrfacher Aufruf ist sicher.
  *
- * Aufruf: npx tsx scripts/import-objektliste.ts
+ * Aufruf: npx tsx scripts/import-objektliste.ts [--ausfuehren]
+ *   [--uebernehmen=<Nr,Nr|alle> --felder=<plz,name,strasse,...>]
+ * Ohne --ausfuehren nur Probelauf. ImportJob DONE wird in derselben Transaktion
+ * wie die Objekte gespeichert. FAILED ist kein pauschaler Rueckrollnachweis;
+ * bei Kommunikationsfehlern den gespeicherten Jobstatus vor Wiederholung lesen.
  */
 import "dotenv/config";
 import { PrismaPg } from "@prisma/adapter-pg";
@@ -131,7 +138,10 @@ const SAMMELKONTEN = new Set([201, 300, 600, 990]);
 const TS_WS_KONTEN = new Set([900, 901, 903, 904, 950, 951]);
 const GESELLSCHAFT_NACH_NR = new Map<number, string>([
   ...[200, 201, 206, 224, 225, 227, 255, 256, 286, 950, 951].map((nr): [number, string] => [nr, "HGI GmbH & Co. KG"]),
-  ...[300, 500].map((nr): [number, string] => [nr, "HGI Immobilien GmbH"]),
+  [300, "HGI Immobilien GmbH"],
+  // WinCasa export-objekte_b.csv, O_NR=500: Immoquelle GmbH c/o HGI Immobilien GmbH.
+  // Die c/o-Verwalteranschrift ist nicht die Gesellschaft des Objekts.
+  [500, "Immoquelle GmbH"],
   ...[600, 610, 611, 637, 639].map((nr): [number, string] => [nr, "HGI Immogroup GmbH"]),
 ]);
 const IN_PLANUNG = new Set([227]);
@@ -207,7 +217,7 @@ const MIETVERWALTUNG_OBJEKTE: ObjektEintrag[] = [
   { nr: 286, name: "Apartmenthaus Apfelstr. 86", strasse: "Apfelstr. 86", plz: "33613", ort: "Bielefeld" },
   { nr: 950, name: "WS Auf der Suelte 6", strasse: "Auf der Suelte 6", plz: "33699", ort: "Bielefeld" },
   { nr: 951, name: "WS Koesliner Str. 8", strasse: "Koesliner Str. 8", plz: "33605", ort: "Bielefeld" },
-  // HGI Immobilien GmbH
+  // HGI Immobilien GmbH (300); Immoquelle GmbH (500)
   { nr: 300, name: "HGI Immobilien GmbH (Sammelkonto)", strasse: "HGI Immobilien GmbH (Sammelkonto)", plz: "33649", ort: "Bielefeld" },
   { nr: 500, name: "Kafkastr. 74", strasse: "Kafkastr. 74", plz: "33729", ort: "Bielefeld" },
   // HGI Immogroup GmbH
@@ -224,7 +234,7 @@ const MIETVERWALTUNG_OBJEKTE: ObjektEintrag[] = [
   { nr: 990, name: "PV-Anlage Strom GbR", strasse: "PV-Anlage Strom GbR", plz: "33649", ort: "Bielefeld" },
 ];
 
-const QUELLE = "objekte.md (WinCasa-Export 05.07.2026, Skill-Referenz Stand 12.07.2026), Nachtraege Edgard Schroeder 24.10.2026";
+const QUELLE = "objekte.md (WinCasa-Export 05.07.2026, Skill-Referenz Stand 12.07.2026), Nachtraege Edgard Schroeder 24.10.2026; Gesellschaft 500: export-objekte_b.csv, am 24.10.2026 nachgelesen";
 
 type Ziel = ObjektEintrag &
   Klassifikation & { neueId: string; alteId: string; anzeige: string; strasseSauber: string };
@@ -234,19 +244,42 @@ type Aktion = "NEU" | "UMBENENNEN" | "UNVERAENDERT" | "AENDERN" | "KONFLIKT";
 type PlanZeile = { ziel: Ziel; aktion: Aktion; vorhanden?: VorhandenesObjekt; daten?: Record<string, unknown>; konflikte: string[] };
 type VorhandenesObjekt = NonNullable<Awaited<ReturnType<Datenbank["objekt"]["findFirst"]>>>;
 
+const UEBERNAHME_FELDER = new Set([
+  "name", "strasse", "plz", "ort", "verwaltungsart", "kontoart", "gesellschaft", "status",
+]);
+
 function parseArgs(argv: string[]) {
+  const unbekannt = argv.filter((a) => a !== "--ausfuehren" &&
+    !a.startsWith("--uebernehmen=") && !a.startsWith("--felder="));
+  if (unbekannt.length > 0) throw new Error(`Unbekannte Argumente: ${unbekannt.join(", ")}`);
+  for (const prefix of ["--uebernehmen=", "--felder="]) {
+    if (argv.filter((a) => a.startsWith(prefix)).length > 1) {
+      throw new Error(`Argument ${prefix} mehrfach angegeben`);
+    }
+  }
   const ausfuehren = argv.includes("--ausfuehren");
   const arg = argv.find((a) => a.startsWith("--uebernehmen="));
   const wert = arg?.slice("--uebernehmen=".length) ?? "";
+  const feldArg = argv.find((a) => a.startsWith("--felder="));
+  if (Boolean(arg) !== Boolean(feldArg)) {
+    throw new Error("--uebernehmen und --felder zusammen angeben, z. B. --uebernehmen=16 --felder=plz");
+  }
+  const felder = new Set(feldArg?.slice("--felder=".length).split(",") ?? []);
+  for (const feld of felder) {
+    if (!UEBERNAHME_FELDER.has(feld)) throw new Error(`Nicht freigabefaehiges Feld: "${feld}"`);
+  }
+  if (arg && !wert) throw new Error("--uebernehmen darf nicht leer sein");
   const alle = wert === "alle";
   const nummern = new Set(
-    alle ? [] : wert.split(",").filter(Boolean).map((n) => {
+    alle || !arg ? [] : wert.split(",").map((n) => {
       const nr = Number(n);
-      if (!Number.isInteger(nr)) throw new Error(`--uebernehmen: "${n}" ist keine Objektnummer`);
+      if (!/^\d{1,3}$/.test(n) || nr < 1 || nr > 999) {
+        throw new Error(`--uebernehmen: "${n}" ist keine Objektnummer`);
+      }
       return nr;
     }),
   );
-  return { ausfuehren, uebernehmenAlle: alle, uebernehmenNummern: nummern };
+  return { ausfuehren, uebernehmenAlle: alle, uebernehmenNummern: nummern, uebernehmenFelder: felder };
 }
 
 function ziele(): { ziele: Ziel[]; fehler: string[] } {
@@ -275,7 +308,7 @@ function ziele(): { ziele: Ziel[]; fehler: string[] } {
 }
 
 // Ermittelt je Objekt, was zu tun ist. Liest nur, schreibt nichts.
-async function plane(db: Datenbank, alle: Ziel[], uebernehmen: { alle: boolean; nummern: Set<number> }) {
+async function plane(db: Datenbank, alle: Ziel[], uebernehmen: { alle: boolean; nummern: Set<number>; felder: Set<string> }) {
   const vorhandene = await db.objekt.findMany({
     where: { externeId: { in: alle.flatMap((z) => [z.neueId, z.alteId]) } },
   });
@@ -309,7 +342,8 @@ async function plane(db: Datenbank, alle: Ziel[], uebernehmen: { alle: boolean; 
     const konflikte: string[] = [];
     if (alt) daten.externeId = z.neueId;
 
-    const darfUeberschreiben = uebernehmen.alle || uebernehmen.nummern.has(z.nr);
+    const darfUeberschreiben = (feld: string) =>
+      (uebernehmen.alle || uebernehmen.nummern.has(z.nr)) && uebernehmen.felder.has(feld);
     const stamm: [string, string, string][] = [
       ["name", vorhanden.name, z.anzeige],
       ["strasse", vorhanden.strasse, z.strasseSauber],
@@ -318,7 +352,7 @@ async function plane(db: Datenbank, alle: Ziel[], uebernehmen: { alle: boolean; 
     ];
     for (const [feld, istWert, sollWert] of stamm) {
       if (istWert === sollWert) continue;
-      if (darfUeberschreiben) daten[feld] = sollWert;
+      if (darfUeberschreiben(feld)) daten[feld] = sollWert;
       else konflikte.push(`${feld}: DB "${istWert}" / Liste "${sollWert}"`);
     }
     // Klassifikation: leere Felder fuellen, abweichende Werte als Konflikt melden.
@@ -330,19 +364,19 @@ async function plane(db: Datenbank, alle: Ziel[], uebernehmen: { alle: boolean; 
     for (const [feld, istWert, sollWert] of klass) {
       if (istWert === sollWert || sollWert === null) continue;
       if (istWert === null) daten[feld] = sollWert;
-      else if (darfUeberschreiben) daten[feld] = sollWert;
+      else if (darfUeberschreiben(feld)) daten[feld] = sollWert;
       else konflikte.push(`${feld}: DB "${istWert}" / Liste "${sollWert}"`);
     }
     // status hat einen Default (AKTIV): nur von AKTIV auf IN_PLANUNG heben, nie zurueckstufen.
     if (vorhanden.status !== z.status) {
-      if (darfUeberschreiben || (vorhanden.status === "AKTIV" && z.status === "IN_PLANUNG")) daten.status = z.status;
+      if (darfUeberschreiben("status") || (vorhanden.status === "AKTIV" && z.status === "IN_PLANUNG")) daten.status = z.status;
       else konflikte.push(`status: DB "${vorhanden.status}" / Liste "${z.status}"`);
     }
     if (Object.keys(daten).length > 0 && vorhanden.stammdatenQuelle !== QUELLE) daten.stammdatenQuelle = QUELLE;
 
     const aktion: Aktion =
       konflikte.length > 0 ? "KONFLIKT" : alt ? "UMBENENNEN" : Object.keys(daten).length > 0 ? "AENDERN" : "UNVERAENDERT";
-    // Ein Konflikt blockiert nicht die uebrigen, unstrittigen Felder desselben Objekts.
+    // Jeder ungeloeste Konflikt sperrt den gesamten Schreiblauf, auch Klassifikations-Updates.
     zeilen.push({ ziel: z, aktion, vorhanden, daten, konflikte });
   }
   return { zeilen, fehler };
@@ -358,24 +392,33 @@ function bericht(zeilen: PlanZeile[]): string {
     .map((z) => {
       const felder = Object.keys(z.daten ?? {}).filter((f) => f !== "stammdatenQuelle");
       return `  ${z.aktion.padEnd(10)} ${objektNummer(z.ziel.nr)} ${z.ziel.anzeige}` +
-        (z.aktion !== "NEU" && felder.length > 0 ? ` -> setzt: ${felder.join(", ")}` : "") +
+        (z.aktion !== "NEU" && felder.length > 0 ?
+          ` -> ${z.aktion === "KONFLIKT" ? "gesperrt" : "geplant"}: ${felder.join(", ")}` : "") +
         z.konflikte.map((k) => `\n             Konflikt ${k}`).join("");
     });
   return [kopf, ...details].join("\n");
 }
 
 async function main() {
-  const { ausfuehren, uebernehmenAlle, uebernehmenNummern } = parseArgs(process.argv.slice(2));
-  const uebernehmen = { alle: uebernehmenAlle, nummern: uebernehmenNummern };
+  const { ausfuehren, uebernehmenAlle, uebernehmenNummern, uebernehmenFelder } = parseArgs(process.argv.slice(2));
+  const uebernehmen = { alle: uebernehmenAlle, nummern: uebernehmenNummern, felder: uebernehmenFelder };
   const { ziele: alle, fehler: vorabFehler } = ziele();
+  for (const nr of uebernehmenNummern) {
+    if (!alle.some((z) => z.nr === nr)) throw new Error(`Objektnummer ${nr} ist nicht in der Importliste`);
+  }
 
   if (!ausfuehren) {
     const { zeilen, fehler } = await plane(prisma, alle, uebernehmen);
     const alleFehler = [...vorabFehler, ...fehler];
+    const konflikte = zeilen.filter((z) => z.aktion === "KONFLIKT");
     console.log("PROBELAUF - es wird nichts geschrieben. Zum Schreiben --ausfuehren angeben.");
     console.log(bericht(zeilen));
     if (alleFehler.length > 0) {
       console.error("Fehler (Ausfuehren waere abgebrochen):\n" + alleFehler.join("\n"));
+      process.exitCode = 1;
+    }
+    if (konflikte.length > 0) {
+      console.error("Ungeloeste Konflikte: der gesamte Schreiblauf waere gesperrt.");
       process.exitCode = 1;
     }
     return;
@@ -385,12 +428,17 @@ async function main() {
     data: { quelle: QUELLE, status: "RUNNING", startedAt: new Date(), zeilenGesamt: alle.length },
   });
   let backupDatei: string | null = null;
+  let ergebnis: PlanZeile[];
   try {
     if (vorabFehler.length > 0) throw new Error(vorabFehler.join("\n"));
-    const ergebnis = await prisma.$transaction(
+    ergebnis = await prisma.$transaction(
       async (tx) => {
         const { zeilen, fehler } = await plane(tx, alle, uebernehmen);
         if (fehler.length > 0) throw new Error(fehler.join("\n"));
+        const konflikte = zeilen.filter((z) => z.aktion === "KONFLIKT");
+        if (konflikte.length > 0) {
+          throw new Error("Ungeloeste Konflikte sperren den gesamten Schreiblauf:\n" + bericht(zeilen));
+        }
 
         const betroffen = zeilen.filter((z) => z.vorhanden && z.daten && Object.keys(z.daten).length > 0);
         if (betroffen.length > 0) {
@@ -400,53 +448,66 @@ async function main() {
           await writeFile(
             backupDatei,
             JSON.stringify({ importJobId: job.id, quelle: QUELLE, vorwerte: betroffen.map((z) => z.vorhanden) }, null, 2),
+            { flag: "wx", mode: 0o600 },
           );
         }
         for (const z of zeilen) {
           if (z.aktion === "NEU") {
             await tx.objekt.create({ data: z.daten as never });
           } else if (z.vorhanden && z.daten && Object.keys(z.daten).length > 0) {
-            await tx.objekt.update({ where: { id: z.vorhanden.id }, data: z.daten as never });
+            const update = await tx.objekt.updateMany({
+              where: { id: z.vorhanden.id, updatedAt: z.vorhanden.updatedAt },
+              data: z.daten as never,
+            });
+            if (update.count !== 1) throw new Error(`Objekt ${z.ziel.nr} wurde parallel geaendert; neuen Probelauf erstellen`);
           }
         }
+        // DONE und Objektwrites bilden eine atomare Einheit. Ein Fehler hier
+        // darf nicht erst nach dem Objektcommit auftreten.
+        await tx.importJob.update({
+          where: { id: job.id },
+          data: {
+            status: "DONE", zeilenErfolgreich: zeilen.length, zeilenFehler: 0,
+            fehlerLog: null, finishedAt: new Date(),
+          },
+        });
         return zeilen;
       },
       { timeout: 60_000 },
     );
 
-    const konflikte = ergebnis.filter((z) => z.aktion === "KONFLIKT");
-    await prisma.importJob.update({
-      where: { id: job.id },
-      data: {
-        status: "DONE",
-        zeilenErfolgreich: ergebnis.length - konflikte.length,
-        zeilenFehler: konflikte.length,
-        fehlerLog:
-          konflikte.length > 0
-            ? "KONFLIKTE (Stammdaten nicht ueberschrieben, mit --uebernehmen aufloesen):\n" +
-              konflikte.map((z) => `Nr. ${z.ziel.nr}: ${z.konflikte.join("; ")}`).join("\n")
-            : null,
-        finishedAt: new Date(),
-      },
-    });
-    console.log(bericht(ergebnis));
-    console.log(`Transaktion abgeschlossen. ImportJob ${job.id}.`);
-    if (backupDatei) console.log(`Vorwerte gesichert in ${backupDatei}`);
-    if (konflikte.length > 0) console.log(`${konflikte.length} Konflikt(e) offen, siehe oben.`);
   } catch (err) {
     const meldung = err instanceof Error ? err.message : String(err);
-    await prisma.importJob.update({
-      where: { id: job.id },
-      data: {
-        status: "FAILED",
-        zeilenFehler: 1,
-        fehlerLog: `Transaktion zurueckgerollt, es wurde nichts geaendert.\n${meldung}`,
-        finishedAt: new Date(),
-      },
-    });
-    console.error(`FEHLER - nichts geaendert (zurueckgerollt):\n${meldung}`);
+    // Ein Kommunikationsfehler kann auch die Commit-Bestaetigung betreffen.
+    // Nie einen bereits gespeicherten DONE-Status mit FAILED ueberschreiben.
+    try {
+      const stand = await prisma.importJob.findUnique({ where: { id: job.id } });
+      if (stand?.status === "DONE") {
+        console.error(`ImportJob ${job.id}: DONE nachgelesen; Objektcommit bestaetigt. Keine automatische Wiederholung.\n${meldung}`);
+      } else if (stand?.status === "RUNNING") {
+        await prisma.importJob.updateMany({
+          where: { id: job.id, status: "RUNNING" },
+          data: {
+            status: "FAILED", zeilenFehler: 1,
+            fehlerLog: `Transaktionsaufruf fehlgeschlagen. Gespeicherten Zustand vor Wiederholung pruefen.\n${meldung}`,
+            finishedAt: new Date(),
+          },
+        });
+        console.error(`ImportJob ${job.id}: Lauf fehlgeschlagen; Zustand vor Wiederholung pruefen.\n${meldung}`);
+      } else {
+        console.error(`ImportJob ${job.id}: Abschluss nicht bestaetigt; Zustand vor Wiederholung pruefen.\n${meldung}`);
+      }
+    } catch (statusFehler) {
+      console.error(`ImportJob ${job.id}: Ergebnis unklar, Status nicht lesbar. Kein Rueckrollnachweis, keine automatische Wiederholung.\n${meldung}\n${String(statusFehler)}`);
+    }
     process.exitCode = 1;
+    return;
   }
+  // Ausgabe liegt ausserhalb des Transaktionsfehlers: ein Ausgabefehler kann
+  // den bereits gespeicherten Erfolg nicht nachtraeglich umetikettieren.
+  console.log(bericht(ergebnis));
+  console.log(`Objekttransaktion und ImportJob ${job.id} gemeinsam abgeschlossen (DONE).`);
+  if (backupDatei) console.log(`Vorwerte gesichert in ${backupDatei}`);
 }
 
 main()
@@ -457,3 +518,4 @@ main()
   .finally(async () => {
     await prisma.$disconnect();
   });
+
