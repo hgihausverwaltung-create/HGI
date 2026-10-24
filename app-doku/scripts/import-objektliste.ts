@@ -13,13 +13,17 @@
  * deshalb das Praefix TS bzw. WS.
  *
  * Weiterhin ausgelassen:
- * - Archivierte, nicht mehr aktiv gefuehrte Objekte: Nr. 287, 600, 638.
+ * - Archivierte, nicht mehr aktiv gefuehrte Objekte: Nr. 287, 638.
  * - Synthetisches Musterhaus 996.
  * - Nr. 011 (frueher Fuerstenweg 1-3): archiviert, laut Edgard Schroeder
  *   24.10.2026 nicht mehr aktiv.
  * - Weitere in Paperless gefuehrte Nummern ohne PLZ/Ort: werden nicht erfunden,
  *   erst nach Nennung durch Edgard Schroeder. (Die zwei fehlenden WEG sind mit
  *   003 und 072 am 24.10.2026 nachgetragen.)
+ *
+ * Nr. 600 (HGI Immogroup GmbH, Sammelkonto, 33649 Bielefeld): laut Export
+ * archiviert, am 24.10.2026 von Edgard Schroeder als aktiv bestaetigt. Daten
+ * (Bezeichnung, PLZ/Ort) aus dem WinCasa-Export, Sammelkonto wie 201/300/990.
  *
  * Nr. 227 (kuenftig Ziegelstrasse 27, 33609 Bielefeld): am 24.10.2026 von
  * Edgard Schroeder genannt. Mietobjekt (kein WEG) der HGI GmbH & Co. KG,
@@ -108,12 +112,12 @@ type Klassifikation = {
   status: ObjektStatus;
 };
 
-const SAMMELKONTEN = new Set([201, 300, 990]);
+const SAMMELKONTEN = new Set([201, 300, 600, 990]);
 const TS_WS_KONTEN = new Set([900, 901, 903, 904, 950, 951]);
 const GESELLSCHAFT_NACH_NR = new Map<number, string>([
   ...[200, 201, 206, 224, 225, 227, 255, 256, 286, 950, 951].map((nr): [number, string] => [nr, "HGI GmbH & Co. KG"]),
   ...[300, 500].map((nr): [number, string] => [nr, "HGI Immobilien GmbH"]),
-  ...[610, 611, 637, 639].map((nr): [number, string] => [nr, "HGI Immogroup GmbH"]),
+  ...[600, 610, 611, 637, 639].map((nr): [number, string] => [nr, "HGI Immogroup GmbH"]),
 ]);
 const IN_PLANUNG = new Set([227]);
 
@@ -192,6 +196,7 @@ const MIETVERWALTUNG_OBJEKTE: ObjektEintrag[] = [
   { nr: 300, name: "HGI Immobilien GmbH (Sammelkonto)", strasse: "HGI Immobilien GmbH (Sammelkonto)", plz: "33649", ort: "Bielefeld" },
   { nr: 500, name: "Kafkastr. 74", strasse: "Kafkastr. 74", plz: "33729", ort: "Bielefeld" },
   // HGI Immogroup GmbH
+  { nr: 600, name: "HGI Immogroup GmbH (Sammelkonto)", strasse: "HGI Immogroup GmbH (Sammelkonto)", plz: "33649", ort: "Bielefeld" },
   { nr: 610, name: "Gruete 13A, Haus Rechts", strasse: "Gruete 13A, Haus Rechts", plz: "33813", ort: "Oerlinghausen" },
   { nr: 611, name: "Gruete 13, Haus Links", strasse: "Gruete 13, Haus Links", plz: "33813", ort: "Oerlinghausen" },
   { nr: 637, name: "Juetlandstr. 37", strasse: "Juetlandstr. 37", plz: "33729", ort: "Bielefeld" },
