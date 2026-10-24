@@ -32,6 +32,8 @@ Updates vorhandener Objekte sind an deren gelesenen `updatedAt`-Wert gebunden. E
 
 ## Fachliche Korrekturen vom 24.10.2026
 
+Objekt **286** umfasst **Apfelstraße 84 und Apfelstraße 86**, gemeinsam unter derselben Objektnummer (Nutzerbestätigung vom 24.10.2026). Name und Importadresse führen deshalb `Apfelstr. 84+86`. Es bleibt ein Objekt; der stabile Schlüssel `wincasa-286` und die Anzahl von 59 Importzielen bleiben erhalten. Damit ist die zuvor offene Adressabweichung fachlich geklärt. Eine bestehende abweichende Adresse oder Bezeichnung bleibt durch die Feldfreigabe geschützt; nach Prüfung des vollständigen Probelaufs kann sie gezielt mit `--uebernehmen=286 --felder=name,strasse` übernommen werden. Diese Klarstellung führt keinen Produktivimport aus und erzeugt keine zusätzlichen Einheiten oder Objekte.
+
 Die PLZ 015=32139, 016=33609, 038=33649 und 200=33649 wurden von Codex unabhängig anhand von Originalbelegen geprüft. Für die drei Bielefelder Adressen bestätigt auch die amtlich veröffentlichte Straßenliste der Finanzverwaltung NRW die entsprechenden Hausnummernbereiche. Siehe [amtliche Straßenliste](https://www.finanzverwaltung.nrw.de/sites/default/files/asset/document/zustaendigkeiten_bielefeld_fa305.pdf), Seiten 32, 51 und 60. Quellsysteme und Ordnernamen wurden dabei nicht verändert.
 
 Gesellschaft 500 ist **Immoquelle GmbH**. Quelle: WinCasa `Stammdaten_Export/export-objekte_b.csv`, Zeile `O_NR=500`, am 24.10.2026 nachgelesen: Bezeichnung `MV Immoquelle GmbH/Kafkastr. 74`; Kontoinhaber `Immoquelle GmbH c/o HGI Immobilien GmbH`. Der Verwalter hinter `c/o` ist nicht die Objektgesellschaft. Eine bestehende abweichende DB-Zuordnung wird weiterhin als Konflikt behandelt und nicht automatisch ersetzt.

@@ -220,7 +220,8 @@ const MIETVERWALTUNG_OBJEKTE: ObjektEintrag[] = [
   // Neubauprojekt in Planung (Bau 2027 geplant, 18 Apartments). Noch keine Einheiten anlegen.
   { nr: 227, name: "Neubauprojekt Ziegelstr. 27 (in Planung)", strasse: "Ziegelstr. 27", plz: "33609", ort: "Bielefeld" },
   { nr: 256, name: "Engerstr. 56", strasse: "Engerstr. 56", plz: "32051", ort: "Herford" },
-  { nr: 286, name: "Apartmenthaus Apfelstr. 86", strasse: "Apfelstr. 86", plz: "33613", ort: "Bielefeld" },
+  // Nutzerbestätigung 24.10.2026: beide Adressen gehören gemeinsam zu Objekt 286.
+  { nr: 286, name: "Apartmenthaus Apfelstr. 84+86", strasse: "Apfelstr. 84+86", plz: "33613", ort: "Bielefeld" },
   { nr: 950, name: "WS Auf der Suelte 6", strasse: "Auf der Suelte 6", plz: "33699", ort: "Bielefeld" },
   { nr: 951, name: "WS Koesliner Str. 8", strasse: "Koesliner Str. 8", plz: "33605", ort: "Bielefeld" },
   // HGI Immobilien GmbH (300); Immoquelle GmbH (500)
