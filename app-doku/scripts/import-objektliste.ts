@@ -27,6 +27,10 @@
  * 21.08.2026 von Edgard Schroeder nachgetragen - PLZ/Ort per Rueckfrage
  * bestaetigt (gleiche Strasse wie Nr. 2, 33699 Bielefeld).
  *
+ * Anzeigename = Objektnummer dreistellig, dann Bezeichnung, ohne "WEG"
+ * (Vorgabe Edgard Schroeder 24.10.2026), z. B. "012 Myrtenweg 12".
+ * Bereits importierte Objekte erhalten den neuen Namen beim naechsten Lauf.
+ *
  * externeId = "wincasa-<Objektnummer dreistellig mit fuehrenden Nullen>",
  * z. B. wincasa-087, wie die Objektnummer in Paperless. Frueher importierte
  * Objekte mit der alten Schreibweise (wincasa-87) werden umbenannt, nicht
@@ -45,6 +49,10 @@ function objektNummer(nr: number): string {
   return String(nr).padStart(3, "0");
 }
 
+function anzeigename(eintrag: { nr: number; name: string }): string {
+  return `${objektNummer(eintrag.nr)} ${eintrag.name}`;
+}
+
 type ObjektEintrag = {
   nr: number;
   name: string;
@@ -54,43 +62,43 @@ type ObjektEintrag = {
 };
 
 const WEG_OBJEKTE: ObjektEintrag[] = [
-  { nr: 1, name: "WEG Brueckenstr. 66, 66a", strasse: "Brueckenstr. 66, 66a", plz: "33607", ort: "Bielefeld" },
-  { nr: 2, name: "WEG Auf dem Busch 1", strasse: "Auf dem Busch 1", plz: "33699", ort: "Bielefeld" },
-  { nr: 4, name: "WEG Woerheider Weg 4", strasse: "Woerheider Weg 4", plz: "33739", ort: "Bielefeld" },
-  { nr: 7, name: "WEG Auf der Suelte 6", strasse: "Auf der Suelte 6", plz: "33699", ort: "Bielefeld" },
-  { nr: 10, name: "WEG Taxusstr. 12", strasse: "Taxusstr. 12", plz: "33699", ort: "Bielefeld" },
-  { nr: 12, name: "WEG Myrtenweg 12", strasse: "Myrtenweg 12", plz: "33699", ort: "Bielefeld" },
-  { nr: 15, name: "WEG Lange Str. 1", strasse: "Lange Str. 1", plz: "32139", ort: "Spenge" },
-  { nr: 16, name: "WEG Loheide 16", strasse: "Loheide 16", plz: "33611", ort: "Bielefeld" },
-  { nr: 17, name: "WEG Nonengrund 3B", strasse: "Nonengrund 3B", plz: "33813", ort: "Oerlinghausen" },
-  { nr: 25, name: "WEG Obere Wiesenstr. 25", strasse: "Obere Wiesenstr. 25", plz: "32130", ort: "Hiddenhausen" },
-  { nr: 27, name: "WEG Am Erdbeerfeld 27", strasse: "Am Erdbeerfeld 27", plz: "33659", ort: "Bielefeld" },
-  { nr: 31, name: "WEG Brakhofstr. 31", strasse: "Brakhofstr. 31", plz: "33729", ort: "Bielefeld" },
-  { nr: 32, name: "WEG Kreuzstr. 32", strasse: "Kreuzstr. 32", plz: "33602", ort: "Bielefeld" },
-  { nr: 33, name: "WEG Stargarder Str. 26", strasse: "Stargarder Str. 26", plz: "33699", ort: "Bielefeld" },
-  { nr: 34, name: "WEG Stargarder Str. 12", strasse: "Stargarder Str. 12", plz: "33699", ort: "Bielefeld" },
-  { nr: 37, name: "WEG Am Jakobsberg 7/7A", strasse: "Am Jakobsberg 7/7A", plz: "33803", ort: "Steinhagen" },
-  { nr: 38, name: "WEG Guetersloher Str. 38A", strasse: "Guetersloher Str. 38A", plz: "33649", ort: "Bielefeld" },
-  { nr: 40, name: "WEG Koesliner Str. 8", strasse: "Koesliner Str. 8", plz: "33605", ort: "Bielefeld" },
-  { nr: 41, name: "WEG August-Bebel-Str. 69", strasse: "August-Bebel-Str. 69", plz: "33602", ort: "Bielefeld" },
-  { nr: 47, name: "WEG Kiebitzweg 47", strasse: "Kiebitzweg 47", plz: "33607", ort: "Bielefeld" },
-  { nr: 48, name: "WEG Buschweg 48", strasse: "Buschweg 48", plz: "33758", ort: "Schloss Holte-Stukenbrock" },
-  { nr: 55, name: "WEG Beckendorfstr. 55", strasse: "Beckendorfstr. 55", plz: "33739", ort: "Bielefeld" },
-  { nr: 57, name: "WEG Jungbrunnenweg 71/73/75", strasse: "Jungbrunnenweg 71/73/75", plz: "33609", ort: "Bielefeld" },
-  { nr: 69, name: "WEG Mainweg 69A", strasse: "Mainweg 69A", plz: "33689", ort: "Bielefeld" },
-  { nr: 74, name: "WEG Dornberger Strasse 274-276", strasse: "Dornberger Strasse 274-276", plz: "33619", ort: "Bielefeld" },
-  { nr: 87, name: "WEG Auf dem Busch 44-78", strasse: "Auf dem Busch 44-78", plz: "33699", ort: "Bielefeld" },
-  { nr: 88, name: "WEG Osnabruecker Str. 88", strasse: "Osnabruecker Str. 88", plz: "33649", ort: "Bielefeld" },
-  { nr: 103, name: "WEG Leharstr. 3/3A/3B", strasse: "Leharstr. 3/3A/3B", plz: "33647", ort: "Bielefeld" },
+  { nr: 1, name: "Brueckenstr. 66, 66a", strasse: "Brueckenstr. 66, 66a", plz: "33607", ort: "Bielefeld" },
+  { nr: 2, name: "Auf dem Busch 1", strasse: "Auf dem Busch 1", plz: "33699", ort: "Bielefeld" },
+  { nr: 4, name: "Woerheider Weg 4", strasse: "Woerheider Weg 4", plz: "33739", ort: "Bielefeld" },
+  { nr: 7, name: "Auf der Suelte 6", strasse: "Auf der Suelte 6", plz: "33699", ort: "Bielefeld" },
+  { nr: 10, name: "Taxusstr. 12", strasse: "Taxusstr. 12", plz: "33699", ort: "Bielefeld" },
+  { nr: 12, name: "Myrtenweg 12", strasse: "Myrtenweg 12", plz: "33699", ort: "Bielefeld" },
+  { nr: 15, name: "Lange Str. 1", strasse: "Lange Str. 1", plz: "32139", ort: "Spenge" },
+  { nr: 16, name: "Loheide 16", strasse: "Loheide 16", plz: "33611", ort: "Bielefeld" },
+  { nr: 17, name: "Nonengrund 3B", strasse: "Nonengrund 3B", plz: "33813", ort: "Oerlinghausen" },
+  { nr: 25, name: "Obere Wiesenstr. 25", strasse: "Obere Wiesenstr. 25", plz: "32130", ort: "Hiddenhausen" },
+  { nr: 27, name: "Am Erdbeerfeld 27", strasse: "Am Erdbeerfeld 27", plz: "33659", ort: "Bielefeld" },
+  { nr: 31, name: "Brakhofstr. 31", strasse: "Brakhofstr. 31", plz: "33729", ort: "Bielefeld" },
+  { nr: 32, name: "Kreuzstr. 32", strasse: "Kreuzstr. 32", plz: "33602", ort: "Bielefeld" },
+  { nr: 33, name: "Stargarder Str. 26", strasse: "Stargarder Str. 26", plz: "33699", ort: "Bielefeld" },
+  { nr: 34, name: "Stargarder Str. 12", strasse: "Stargarder Str. 12", plz: "33699", ort: "Bielefeld" },
+  { nr: 37, name: "Am Jakobsberg 7/7A", strasse: "Am Jakobsberg 7/7A", plz: "33803", ort: "Steinhagen" },
+  { nr: 38, name: "Guetersloher Str. 38A", strasse: "Guetersloher Str. 38A", plz: "33649", ort: "Bielefeld" },
+  { nr: 40, name: "Koesliner Str. 8", strasse: "Koesliner Str. 8", plz: "33605", ort: "Bielefeld" },
+  { nr: 41, name: "August-Bebel-Str. 69", strasse: "August-Bebel-Str. 69", plz: "33602", ort: "Bielefeld" },
+  { nr: 47, name: "Kiebitzweg 47", strasse: "Kiebitzweg 47", plz: "33607", ort: "Bielefeld" },
+  { nr: 48, name: "Buschweg 48", strasse: "Buschweg 48", plz: "33758", ort: "Schloss Holte-Stukenbrock" },
+  { nr: 55, name: "Beckendorfstr. 55", strasse: "Beckendorfstr. 55", plz: "33739", ort: "Bielefeld" },
+  { nr: 57, name: "Jungbrunnenweg 71/73/75", strasse: "Jungbrunnenweg 71/73/75", plz: "33609", ort: "Bielefeld" },
+  { nr: 69, name: "Mainweg 69A", strasse: "Mainweg 69A", plz: "33689", ort: "Bielefeld" },
+  { nr: 74, name: "Dornberger Strasse 274-276", strasse: "Dornberger Strasse 274-276", plz: "33619", ort: "Bielefeld" },
+  { nr: 87, name: "Auf dem Busch 44-78", strasse: "Auf dem Busch 44-78", plz: "33699", ort: "Bielefeld" },
+  { nr: 88, name: "Osnabruecker Str. 88", strasse: "Osnabruecker Str. 88", plz: "33649", ort: "Bielefeld" },
+  { nr: 103, name: "Leharstr. 3/3A/3B", strasse: "Leharstr. 3/3A/3B", plz: "33647", ort: "Bielefeld" },
   {
     nr: 104,
-    name: "WEG Kahler Krug 2,4,4a,4b / Joellenbecker Str. 391,393",
+    name: "Kahler Krug 2,4,4a,4b / Joellenbecker Str. 391,393",
     strasse: "Kahler Krug 2,4,4a,4b / Joellenbecker Str. 391,393",
     plz: "33739",
     ort: "Bielefeld",
   },
-  { nr: 115, name: "WEG Potsdamer Str. 15-17", strasse: "Potsdamer Str. 15-17", plz: "33719", ort: "Bielefeld" },
-  { nr: 117, name: "WEG Gerhardstr. 17", strasse: "Gerhardstr. 17", plz: "33649", ort: "Bielefeld" },
+  { nr: 115, name: "Potsdamer Str. 15-17", strasse: "Potsdamer Str. 15-17", plz: "33719", ort: "Bielefeld" },
+  { nr: 117, name: "Gerhardstr. 17", strasse: "Gerhardstr. 17", plz: "33649", ort: "Bielefeld" },
 ];
 
 const MIETVERWALTUNG_OBJEKTE: ObjektEintrag[] = [
@@ -102,7 +110,7 @@ const MIETVERWALTUNG_OBJEKTE: ObjektEintrag[] = [
   // HGI GmbH & Co. KG
   { nr: 200, name: "Buerohaus HGI", strasse: "Buerohaus HGI", plz: "33649", ort: "Bielefeld" },
   { nr: 201, name: "HGI GmbH & Co. KG (Sammelkonto)", strasse: "HGI GmbH & Co. KG (Sammelkonto)", plz: "33649", ort: "Bielefeld" },
-  { nr: 206, name: "Auf der Suelte 6 (Konto 206)", strasse: "Auf der Suelte 6", plz: "33699", ort: "Bielefeld" },
+  { nr: 206, name: "Auf der Suelte 6", strasse: "Auf der Suelte 6", plz: "33699", ort: "Bielefeld" },
   { nr: 224, name: "Im Alten Krug 3", strasse: "Im Alten Krug 3", plz: "33729", ort: "Bielefeld" },
   { nr: 225, name: "Apartmenthaus Ziegelstr. 25", strasse: "Ziegelstr. 25", plz: "33609", ort: "Bielefeld" },
   // Nr. 227: Mietobjekt der HGI GmbH & Co. KG, Grundstueck neben Nr. 225, kuenftig Ziegelstr. 27.
@@ -158,13 +166,13 @@ async function main() {
       await prisma.objekt.upsert({
         where: { externeId: neueId },
         update: {
-          name: eintrag.name,
+          name: anzeigename(eintrag),
           strasse: eintrag.strasse,
           plz: eintrag.plz,
           ort: eintrag.ort,
         },
         create: {
-          name: eintrag.name,
+          name: anzeigename(eintrag),
           strasse: eintrag.strasse,
           plz: eintrag.plz,
           ort: eintrag.ort,
