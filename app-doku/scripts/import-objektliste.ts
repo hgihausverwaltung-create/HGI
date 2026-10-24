@@ -13,7 +13,10 @@
  * deshalb das Praefix TS bzw. WS.
  *
  * Weiterhin ausgelassen:
- * - Archivierte, nicht mehr aktiv gefuehrte Objekte: Nr. 287, 638.
+ * - Archivierte Objekte Nr. 287 (Potsdamer Str. 15-17) und Nr. 638 (Suedstr. 72):
+ *   von Edgard Schroeder am 24.10.2026 bestaetigt archiviert, werden nicht in die
+ *   Ticket-App aufgenommen. Die Nummern bleiben vergeben und werden nicht neu
+ *   verwendet.
  * - Synthetisches Musterhaus 996.
  * - Nr. 011 (frueher Fuerstenweg 1-3): archiviert, laut Edgard Schroeder
  *   24.10.2026 nicht mehr aktiv.
