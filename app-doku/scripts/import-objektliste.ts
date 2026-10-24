@@ -15,6 +15,8 @@
  * Weiterhin ausgelassen:
  * - Archivierte, nicht mehr aktiv gefuehrte Objekte: Nr. 287, 600, 638.
  * - Synthetisches Musterhaus 996.
+ * - Nr. 011 (frueher Fuerstenweg 1-3): archiviert, laut Edgard Schroeder
+ *   24.10.2026 nicht mehr aktiv.
  * - Weitere in Paperless gefuehrte Nummern ohne PLZ/Ort (u. a. zwei WEG):
  *   werden nicht erfunden, erst nach Nennung durch Edgard Schroeder.
  *
@@ -22,6 +24,9 @@
  * Edgard Schroeder genannt. Mietobjekt (kein WEG) der HGI GmbH & Co. KG,
  * Grundstueck neben Nr. 225 (vermietete Apartments), Neubauprojekt in
  * Planung: Bau naechstes Jahr, 18 Apartments vorgesehen.
+ *
+ * Nr. 003 (Faerberweg 3, 33659 Bielefeld) fehlte im Export; Name von Edgard
+ * Schroeder am 24.10.2026 bestaetigt, PLZ/Ort aus dem Drive-Ordner "WEG 003".
  *
  * Nr. 87 (WEG Auf dem Busch 44-78) fehlte im Export und wurde am
  * 21.08.2026 von Edgard Schroeder nachgetragen - PLZ/Ort per Rueckfrage
@@ -82,6 +87,7 @@ type ObjektEintrag = {
 const WEG_OBJEKTE: ObjektEintrag[] = [
   { nr: 1, name: "Brueckenstr. 66, 66a", strasse: "Brueckenstr. 66, 66a", plz: "33607", ort: "Bielefeld" },
   { nr: 2, name: "Auf dem Busch 1", strasse: "Auf dem Busch 1", plz: "33699", ort: "Bielefeld" },
+  { nr: 3, name: "Faerberweg 3", strasse: "Faerberweg 3", plz: "33659", ort: "Bielefeld" },
   { nr: 4, name: "Woerheider Weg 4", strasse: "Woerheider Weg 4", plz: "33739", ort: "Bielefeld" },
   { nr: 7, name: "Auf der Suelte 6", strasse: "Auf der Suelte 6", plz: "33699", ort: "Bielefeld" },
   { nr: 10, name: "Taxusstr. 12", strasse: "Taxusstr. 12", plz: "33699", ort: "Bielefeld" },
