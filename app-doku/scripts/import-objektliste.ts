@@ -18,8 +18,10 @@
  * - Weitere in Paperless gefuehrte Nummern ohne PLZ/Ort (u. a. zwei WEG):
  *   werden nicht erfunden, erst nach Nennung durch Edgard Schroeder.
  *
- * Nr. 227 (Ziegelstrasse 27, 33609 Bielefeld) am 24.10.2026 von Edgard
- * Schroeder genannt; in Paperless als Behoerdenschreiben-Objekt gefuehrt.
+ * Nr. 227 (kuenftig Ziegelstrasse 27, 33609 Bielefeld): am 24.10.2026 von
+ * Edgard Schroeder genannt. Mietobjekt (kein WEG) der HGI GmbH & Co. KG,
+ * Grundstueck neben Nr. 225 (vermietete Apartments), Neubauprojekt in
+ * Planung: Bau naechstes Jahr, 18 Apartments vorgesehen.
  *
  * Nr. 87 (WEG Auf dem Busch 44-78) fehlte im Export und wurde am
  * 21.08.2026 von Edgard Schroeder nachgetragen - PLZ/Ort per Rueckfrage
@@ -103,6 +105,9 @@ const MIETVERWALTUNG_OBJEKTE: ObjektEintrag[] = [
   { nr: 206, name: "Auf der Suelte 6 (Konto 206)", strasse: "Auf der Suelte 6", plz: "33699", ort: "Bielefeld" },
   { nr: 224, name: "Im Alten Krug 3", strasse: "Im Alten Krug 3", plz: "33729", ort: "Bielefeld" },
   { nr: 225, name: "Apartmenthaus Ziegelstr. 25", strasse: "Ziegelstr. 25", plz: "33609", ort: "Bielefeld" },
+  // Nr. 227: Mietobjekt der HGI GmbH & Co. KG, Grundstueck neben Nr. 225, kuenftig Ziegelstr. 27.
+  // Neubauprojekt in Planung (Bau 2027 geplant, 18 Apartments). Noch keine Einheiten anlegen.
+  { nr: 227, name: "Neubauprojekt Ziegelstr. 27 (in Planung)", strasse: "Ziegelstr. 27", plz: "33609", ort: "Bielefeld" },
   { nr: 255, name: "Detmolder Str. 55", strasse: "Detmolder Str. 55", plz: "33602", ort: "Bielefeld" },
   { nr: 256, name: "Engerstr. 56", strasse: "Engerstr. 56", plz: "32051", ort: "Herford" },
   { nr: 286, name: "Apartmenthaus Apfelstr. 86", strasse: "Apfelstr. 86", plz: "33613", ort: "Bielefeld" },
@@ -116,8 +121,6 @@ const MIETVERWALTUNG_OBJEKTE: ObjektEintrag[] = [
   { nr: 611, name: "Gruete 13, Haus Links", strasse: "Gruete 13, Haus Links", plz: "33813", ort: "Oerlinghausen" },
   { nr: 637, name: "Juetlandstrasse", strasse: "Juetlandstrasse", plz: "33729", ort: "Bielefeld" },
   { nr: 639, name: "Stromstrasse 6-8", strasse: "Stromstrasse 6-8", plz: "33729", ort: "Bielefeld" },
-  // Weitere in Paperless gefuehrte Nummer (PLZ/Ort von Edgard Schroeder am 24.10.2026 genannt)
-  { nr: 227, name: "Ziegelstr. 27", strasse: "Ziegelstr. 27", plz: "33609", ort: "Bielefeld" },
   // Private Zuordnung (Tetyana Schroeder) und Sonstige
   { nr: 900, name: "TS Stargarder Str. 26", strasse: "Stargarder Str. 26", plz: "33699", ort: "Bielefeld" },
   { nr: 901, name: "TS Auf der Suelte 6", strasse: "Auf der Suelte 6", plz: "33699", ort: "Bielefeld" },
