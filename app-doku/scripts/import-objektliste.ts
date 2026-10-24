@@ -27,6 +27,9 @@
  * 21.08.2026 von Edgard Schroeder nachgetragen - PLZ/Ort per Rueckfrage
  * bestaetigt (gleiche Strasse wie Nr. 2, 33699 Bielefeld).
  *
+ * Namen und Strassen werden von Sonderzeichen befreit ("/" wird "-",
+ * "&" und "+" werden "und"), Vorgabe Edgard Schroeder 24.10.2026.
+ *
  * Anzeigename = Objektnummer dreistellig, dann Bezeichnung, ohne "WEG"
  * (Vorgabe Edgard Schroeder 24.10.2026), z. B. "012 Myrtenweg 12".
  * Bereits importierte Objekte erhalten den neuen Namen beim naechsten Lauf.
@@ -49,8 +52,23 @@ function objektNummer(nr: number): string {
   return String(nr).padStart(3, "0");
 }
 
+// Keine Sonderzeichen in Namen und Strassen, damit sie als Ordner- und Dateinamen
+// und in Skripten keine Fehler verursachen: "/" wird "-", "&" und "+" werden "und".
+function bereinige(text: string): string {
+  const sauber = text
+    .replace(/\s*[&+]\s*/g, " und ")
+    .replace(/\s*\/\s*/g, (treffer) => (treffer.includes(" ") ? " - " : "-"))
+    .replace(/[\\:*?"<>|]/g, "-")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+  if (!/^[A-Za-z0-9 .,()-]+$/.test(sauber)) {
+    throw new Error(`Unzulaessige Zeichen in "${text}"`);
+  }
+  return sauber;
+}
+
 function anzeigename(eintrag: { nr: number; name: string }): string {
-  return `${objektNummer(eintrag.nr)} ${eintrag.name}`;
+  return `${objektNummer(eintrag.nr)} ${bereinige(eintrag.name)}`;
 }
 
 type ObjektEintrag = {
@@ -167,13 +185,13 @@ async function main() {
         where: { externeId: neueId },
         update: {
           name: anzeigename(eintrag),
-          strasse: eintrag.strasse,
+          strasse: bereinige(eintrag.strasse),
           plz: eintrag.plz,
           ort: eintrag.ort,
         },
         create: {
           name: anzeigename(eintrag),
-          strasse: eintrag.strasse,
+          strasse: bereinige(eintrag.strasse),
           plz: eintrag.plz,
           ort: eintrag.ort,
           externeId: neueId,
