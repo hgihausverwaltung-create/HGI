@@ -1,6 +1,8 @@
 # Objektimport: Probelauf, Feldfreigabe und Abschlussnachweis
 
-Der Importer legt die 60 Objekte der hinterlegten Liste an. Bestehende Daten werden vor jedem Schreiblauf verglichen. Standardmäßig liest er nur und zeigt den Änderungsplan. Dies ist keine Freigabe für einen Produktivlauf.
+Der Importer führt die 59 aktiven bzw. ausdrücklich vorgesehenen Objekte der hinterlegten Liste. Bestehende Daten werden vor jedem Schreiblauf verglichen. Standardmäßig liest er nur und zeigt den Änderungsplan. Dies ist keine Freigabe für einen Produktivlauf.
+
+Objekt 255 (Detmolder Straße 55) ist nach ausdrücklicher Nutzerbestätigung vom 24.10.2026 archiviert und wird nicht mehr aktiv importiert. Ein schon vorhandener Datensatz wird weder gelöscht noch automatisch umklassifiziert; Originalbelege, Verknüpfungen und die vergebene Nummer bleiben erhalten. Die Exportordnerzahl ist keine Anzahl aktiver Importziele.
 
 ```sh
 npx tsx scripts/import-objektliste.ts
@@ -43,3 +45,4 @@ node --test scripts/import-objektliste.test.mjs
 Die Regressionstests verwenden Node 24, die echte Importerlogik und einen synthetischen Speicheradapter. Sie decken Probelauf, Feldfreigabe, Konfliktsperre, Sicherungsfehler, DONE-Fehler, verlorene Commitbestätigung, parallele Änderungen und Schlüsselwechsel ab. Es sind keine PostgreSQL-/Prisma-Integrationstests und keine Produktivabnahme. TypeScript-Typen werden für diese isolierten Tests entfernt; ein vollständiger Projekt-Typecheck/Build wird dadurch nicht ersetzt.
 
 Die Änderungen stehen **ZUR PRÜFUNG** durch Claude. Ein Merge, DB-Import, eine Migration oder ein Produktivrollout wird dadurch nicht freigegeben. Unicode-/Kurznamenregeln, übrige Gesellschaftszuordnungen, vollständige Datensatzprovenienz und End-to-End-Abnahme bleiben gesonderte Aufgaben.
+

@@ -98,8 +98,8 @@ function existing(z) {
 const allRows = () => targets.map(existing);
 const row16 = (e) => e.state.rows.find((r) => r.externeId === 'wincasa-016');
 
-test('60 eindeutige Ziele, bestaetigte PLZ und Gesellschaft500', () => {
-  assert.equal(targets.length, 60); assert.equal(new Set(targets.map((z) => z.nr)).size, 60);
+test('59 eindeutige Ziele, bestaetigte PLZ und Gesellschaft500', () => {
+  assert.equal(targets.length, 59); assert.equal(new Set(targets.map((z) => z.nr)).size, 59);
   for (const [nr, plz] of [[15, '32139'], [16, '33609'], [38, '33649'], [200, '33649']]) {
     assert.equal(targets.find((z) => z.nr === nr).plz, plz);
   }
@@ -155,7 +155,7 @@ test('Fehler am DONE-Update rollt Objektwrites gemeinsam zurueck', async () => {
 });
 test('Commitbestaetigung verloren: gespeichertes DONE bleibt erhalten', async () => {
   const e = environment({ argv: ['--ausfuehren'], failCommitAcknowledgement: true }); await e.api.main();
-  assert.equal(e.state.rows.length, 60); assert.equal(e.state.jobs[0].status, 'DONE');
+  assert.equal(e.state.rows.length, 59); assert.equal(e.state.jobs[0].status, 'DONE');
   assert.match(e.state.errors.join('\n'), /DONE nachgelesen/);
   assert.doesNotMatch(e.state.errors.join('\n'), /nichts geaendert|zurueckgerollt/);
 });
@@ -167,7 +167,7 @@ test('Commitbestaetigung und Statuszugriff verloren: Ergebnis ausdruecklich unkl
 test('Ausgabefehler nach Commit aendert DONE nicht', async () => {
   const e = environment({ argv: ['--ausfuehren'], failOutput: true });
   await assert.rejects(e.api.main(), /OUTPUT_FAILURE/); assert.equal(e.state.jobs[0].status, 'DONE');
-  assert.equal(e.state.rows.length, 60);
+  assert.equal(e.state.rows.length, 59);
 });
 test('Fehler mitten in Objektwrites hinterlaesst keine Teilobjekte', async () => {
   const e = environment({ argv: ['--ausfuehren'], failObject: true }); await e.api.main();
@@ -188,10 +188,38 @@ test('Alten Schluessel unter gleicher interner ID migrieren', async () => {
   const rows = allRows(); rows.find((r) => r.id === 'id-87').externeId = 'wincasa-87';
   const e = environment({ rows, argv: ['--ausfuehren'] }); await e.api.main();
   assert.equal(e.state.rows.find((r) => r.id === 'id-87').externeId, 'wincasa-087');
-  assert.equal(e.state.rows.length, 60); assert.equal(e.state.jobs[0].status, 'DONE');
+  assert.equal(e.state.rows.length, 59); assert.equal(e.state.jobs[0].status, 'DONE');
 });
 test('Doppelter alter/neuer Schluessel sperrt alle Writes', async () => {
   const rows = allRows(); rows.push({ ...copy(rows.find((r) => r.id === 'id-87')), id: 'duplicate', externeId: 'wincasa-87' });
   const e = environment({ rows, argv: ['--ausfuehren'] }); await e.api.main();
   assert.deepEqual(e.state.rows, rows); assert.equal(e.state.objectWrites, 0);
 });
+
+test('Archiviertes255 ist kein aktives Ziel; Freigabe erfindet kein Importziel', async () => {
+  assert.equal(targets.some((z) => z.nr === 255), false);
+  const e = environment({ argv: ['--ausfuehren', '--uebernehmen=255', '--felder=status'] });
+  await assert.rejects(e.api.main(), /nicht in der Importliste/);
+  assert.equal(e.state.objectWrites, 0); assert.equal(e.state.jobs.length, 0);
+});
+test('Bereits vorhandenes255 und seine interne ID bleiben unveraendert', async () => {
+  const legacy = { id: 'historical-255', externeId: 'wincasa-255', status: 'AKTIV',
+    name: 'Historischer Datensatz255', verknuepfung: 'vorhandener-Beleg' };
+  const e = environment({ rows: [...allRows(), legacy], argv: ['--ausfuehren'] });
+  await e.api.main();
+  assert.deepEqual(e.state.rows.find((r) => r.id === legacy.id), legacy);
+  assert.equal(e.state.rows.length, 60); assert.equal(e.state.objectWrites, 0);
+  assert.equal(e.state.jobs[0].status, 'DONE');
+});
+test('WS950/951 verwendenHGIImmobilien und schuetzen abweichende Bestandswerte', async () => {
+  for (const nr of [950, 951]) assert.equal(targets.find((z) => z.nr === nr).gesellschaft, 'HGI Immobilien GmbH');
+  const rows = allRows();
+  for (const nr of [950, 951]) rows.find((r) => r.id === `id-${nr}`).gesellschaft = 'HGI GmbH & Co. KG';
+  const blocked = environment({ rows, argv: ['--ausfuehren'] }); await blocked.api.main();
+  assert.deepEqual(blocked.state.rows, rows); assert.equal(blocked.state.objectWrites, 0);
+  const accepted = environment({ rows, argv: ['--ausfuehren', '--uebernehmen=950,951', '--felder=gesellschaft'] });
+  await accepted.api.main();
+  for (const nr of [950, 951]) assert.equal(accepted.state.rows.find((r) => r.id === `id-${nr}`).gesellschaft, 'HGI Immobilien GmbH');
+  assert.equal(accepted.state.objectWrites, 2); assert.equal(accepted.state.jobs[0].status, 'DONE');
+});
+

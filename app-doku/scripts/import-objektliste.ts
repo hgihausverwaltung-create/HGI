@@ -13,6 +13,9 @@
  * deshalb das Praefix TS bzw. WS.
  *
  * Weiterhin ausgelassen:
+ * - Nr. 255 (Detmolder Str. 55): ARCHIVIERT=J im aktuellen WinCasa-Export;
+ *   Edgard hat am 24.10.2026 bestaetigt: archiviert, nicht mehr aktiv uebernehmen.
+ *   Bereits vorhandene Datensaetze und Belegverknuepfungen bleiben unangetastet.
  * - Archivierte Objekte Nr. 287 (Potsdamer Str. 15-17) und Nr. 638 (Suedstr. 72):
  *   von Edgard Schroeder am 24.10.2026 bestaetigt archiviert, werden nicht in die
  *   Ticket-App aufgenommen. Die Nummern bleiben vergeben und werden nicht neu
@@ -137,7 +140,7 @@ type Klassifikation = {
 const SAMMELKONTEN = new Set([201, 300, 600, 990]);
 const TS_WS_KONTEN = new Set([900, 901, 903, 904, 950, 951]);
 const GESELLSCHAFT_NACH_NR = new Map<number, string>([
-  ...[200, 201, 206, 224, 225, 227, 255, 256, 286].map((nr): [number, string] => [nr, "HGI GmbH & Co. KG"]),
+  ...[200, 201, 206, 224, 225, 227, 256, 286].map((nr): [number, string] => [nr, "HGI GmbH & Co. KG"]),
   [300, "HGI Immobilien GmbH"],
   // WinCasa export-objekte_b.csv: OBJEKT-KONTOINHABER der WS-Konten 950/951 ist
   // HGI Immobilien GmbH (nicht die KG, in deren Block die Quelle sie auflistet).
@@ -216,7 +219,6 @@ const MIETVERWALTUNG_OBJEKTE: ObjektEintrag[] = [
   // Nr. 227: Mietobjekt der HGI GmbH & Co. KG, Grundstueck neben Nr. 225, kuenftig Ziegelstr. 27.
   // Neubauprojekt in Planung (Bau 2027 geplant, 18 Apartments). Noch keine Einheiten anlegen.
   { nr: 227, name: "Neubauprojekt Ziegelstr. 27 (in Planung)", strasse: "Ziegelstr. 27", plz: "33609", ort: "Bielefeld" },
-  { nr: 255, name: "Detmolder Str. 55", strasse: "Detmolder Str. 55", plz: "33602", ort: "Bielefeld" },
   { nr: 256, name: "Engerstr. 56", strasse: "Engerstr. 56", plz: "32051", ort: "Herford" },
   { nr: 286, name: "Apartmenthaus Apfelstr. 86", strasse: "Apfelstr. 86", plz: "33613", ort: "Bielefeld" },
   { nr: 950, name: "WS Auf der Suelte 6", strasse: "Auf der Suelte 6", plz: "33699", ort: "Bielefeld" },
@@ -522,4 +524,5 @@ main()
   .finally(async () => {
     await prisma.$disconnect();
   });
+
 
