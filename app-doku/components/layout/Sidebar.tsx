@@ -5,6 +5,7 @@ const NAV_ITEMS = [
   { href: "/dokumente", label: "Dokumente" },
   { href: "/versammlungen", label: "Versammlungen" },
   { href: "/wirtschaftsplaene", label: "Wirtschaftsplaene" },
+  { href: "/tickets", label: "Tickets" },
   { href: "/objekte", label: "Objekte" },
   { href: "/eigentuemer", label: "Eigentuemer" },
   { href: "/mieter", label: "Mieter" },

@@ -121,6 +121,37 @@ async function main() {
     create: { wirtschaftsplanId: wirtschaftsplan.id, einheitId: einheit2.id, betragMonatlich: "180.00" },
   });
 
+  const testUser = await prisma.user.findUniqueOrThrow({ where: { email: testEmail } });
+
+  if ((await prisma.ticket.count()) === 0) {
+    await prisma.ticket.create({
+      data: {
+        titel: "Heizung in WE 1 faellt aus",
+        beschreibung: "Mieter meldet, dass die Heizung seit gestern kalt bleibt.",
+        kategorie: "SCHADENSMELDUNG",
+        prioritaet: "HOCH",
+        status: "IN_BEARBEITUNG",
+        objektId: objekt.id,
+        einheitId: einheit1.id,
+        zugewiesenAnId: testUser.id,
+        kommentare: {
+          create: [{ text: "Handwerker beauftragt, Termin morgen 9 Uhr.", erstelltVonId: testUser.id }],
+        },
+      },
+    });
+
+    await prisma.ticket.create({
+      data: {
+        titel: "Frage zur Nebenkostenabrechnung",
+        kategorie: "ANFRAGE",
+        prioritaet: "NIEDRIG",
+        status: "OFFEN",
+        objektId: objekt.id,
+        einheitId: einheit2.id,
+      },
+    });
+  }
+
   console.log("Seed abgeschlossen. Testbenutzer: %s / test1234", testEmail);
 }
 
