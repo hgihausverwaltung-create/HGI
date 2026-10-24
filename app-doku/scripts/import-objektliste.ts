@@ -15,8 +15,11 @@
  * Weiterhin ausgelassen:
  * - Archivierte, nicht mehr aktiv gefuehrte Objekte: Nr. 287, 600, 638.
  * - Synthetisches Musterhaus 996.
- * - Nr. 227 (Ziegelstrasse 27) und weitere in Paperless gefuehrte Nummern:
- *   PLZ/Ort liegen nicht vor, werden nicht erfunden.
+ * - Weitere in Paperless gefuehrte Nummern ohne PLZ/Ort (u. a. zwei WEG):
+ *   werden nicht erfunden, erst nach Nennung durch Edgard Schroeder.
+ *
+ * Nr. 227 (Ziegelstrasse 27, 33609 Bielefeld) am 24.10.2026 von Edgard
+ * Schroeder genannt; in Paperless als Behoerdenschreiben-Objekt gefuehrt.
  *
  * Nr. 87 (WEG Auf dem Busch 44-78) fehlte im Export und wurde am
  * 21.08.2026 von Edgard Schroeder nachgetragen - PLZ/Ort per Rueckfrage
@@ -113,6 +116,8 @@ const MIETVERWALTUNG_OBJEKTE: ObjektEintrag[] = [
   { nr: 611, name: "Gruete 13, Haus Links", strasse: "Gruete 13, Haus Links", plz: "33813", ort: "Oerlinghausen" },
   { nr: 637, name: "Juetlandstrasse", strasse: "Juetlandstrasse", plz: "33729", ort: "Bielefeld" },
   { nr: 639, name: "Stromstrasse 6-8", strasse: "Stromstrasse 6-8", plz: "33729", ort: "Bielefeld" },
+  // Weitere in Paperless gefuehrte Nummer (PLZ/Ort von Edgard Schroeder am 24.10.2026 genannt)
+  { nr: 227, name: "Ziegelstr. 27", strasse: "Ziegelstr. 27", plz: "33609", ort: "Bielefeld" },
   // Private Zuordnung (Tetyana Schroeder) und Sonstige
   { nr: 900, name: "TS Stargarder Str. 26", strasse: "Stargarder Str. 26", plz: "33699", ort: "Bielefeld" },
   { nr: 901, name: "TS Auf der Suelte 6", strasse: "Auf der Suelte 6", plz: "33699", ort: "Bielefeld" },
