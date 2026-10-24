@@ -146,6 +146,13 @@ const GESELLSCHAFT_NACH_NR = new Map<number, string>([
   // HGI Immobilien GmbH (nicht die KG, in deren Block die Quelle sie auflistet).
   [950, "HGI Immobilien GmbH"],
   [951, "HGI Immobilien GmbH"],
+  // Fremdverwaltung: Eigentuemergesellschaft laut WinCasa-Kontoinhaber, am 24.10.2026
+  // von Edgard Schroeder bestaetigt (Nr. 173: "Faunova Haus" gesprochen, Schreibweise
+  // laut Export "V Nova-Haus GmbH"; Nr. 183: "Box Projekt", Export "BO.X Projekt GmbH").
+  // Nr. 990 und die privaten TS-Konten bleiben leer (interne private Konten).
+  [168, "Dortmund Invest GmbH"],
+  [173, "V Nova-Haus GmbH"],
+  [183, "BO.X Projekt GmbH"],
   // WinCasa export-objekte_b.csv, O_NR=500: Immoquelle GmbH c/o HGI Immobilien GmbH.
   // Die c/o-Verwalteranschrift ist nicht die Gesellschaft des Objekts.
   [500, "Immoquelle GmbH"],
