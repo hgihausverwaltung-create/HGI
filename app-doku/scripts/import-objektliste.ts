@@ -4,18 +4,28 @@
  * in die Ticket-App, damit Tickets echten Objekten statt Testdaten
  * zugeordnet werden koennen.
  *
- * Bewusst ausgelassen (mit Edgard Schroeder abgestimmt):
- * - Sammel-/Verrechnungskonten ohne eigenes Gebaeude: Nr. 201, 300, 990.
- * - TS-/WS-Konten, die laut Quelle dasselbe Gebaeude wie ein bereits
- *   gelistetes WEG-Objekt betreffen: Nr. 206, 900, 901, 903, 904, 950, 951.
+ * Entscheidung Edgard Schroeder 24.10.2026: Jedes WinCasa-Konto bekommt
+ * seine eigene Objektnummer, wie in der zentralen Paperless-Ablage. Dazu
+ * gehoeren die TS-/WS-Konten (900, 901, 903, 904, 950, 951), die
+ * Sammel-/Verrechnungskonten (201, 300, 990) und Nr. 206 (Auf der Suelte 6
+ * unter HGI GmbH & Co. KG). TS-/WS-Konten betreffen laut Quelle dasselbe
+ * Gebaeude wie ein WEG-Objekt (z. B. 901/950 wie Nr. 7); die Namen tragen
+ * deshalb das Praefix TS bzw. WS.
+ *
+ * Weiterhin ausgelassen:
  * - Archivierte, nicht mehr aktiv gefuehrte Objekte: Nr. 287, 600, 638.
+ * - Synthetisches Musterhaus 996.
+ * - Nr. 227 (Ziegelstrasse 27) und weitere in Paperless gefuehrte Nummern:
+ *   PLZ/Ort liegen nicht vor, werden nicht erfunden.
  *
  * Nr. 87 (WEG Auf dem Busch 44-78) fehlte im Export und wurde am
  * 21.08.2026 von Edgard Schroeder nachgetragen - PLZ/Ort per Rueckfrage
  * bestaetigt (gleiche Strasse wie Nr. 2, 33699 Bielefeld).
  *
- * externeId = "wincasa-<Objektnummer>" fuer einen spaeteren Abgleich mit
- * WinCasa/idwell. Idempotent per upsert - mehrfacher Aufruf ist sicher.
+ * externeId = "wincasa-<Objektnummer dreistellig mit fuehrenden Nullen>",
+ * z. B. wincasa-087, wie die Objektnummer in Paperless. Frueher importierte
+ * Objekte mit der alten Schreibweise (wincasa-87) werden umbenannt, nicht
+ * doppelt angelegt. Idempotent - mehrfacher Aufruf ist sicher.
  *
  * Aufruf: npx tsx scripts/import-objektliste.ts
  */
@@ -25,6 +35,10 @@ import { PrismaClient } from "../app/generated/prisma/client";
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
+
+function objektNummer(nr: number): string {
+  return String(nr).padStart(3, "0");
+}
 
 type ObjektEintrag = {
   nr: number;
@@ -82,18 +96,29 @@ const MIETVERWALTUNG_OBJEKTE: ObjektEintrag[] = [
   { nr: 902, name: "Am Sonnenberg 2", strasse: "Am Sonnenberg 2", plz: "32105", ort: "Bad Salzuflen" },
   // HGI GmbH & Co. KG
   { nr: 200, name: "Buerohaus HGI", strasse: "Buerohaus HGI", plz: "33649", ort: "Bielefeld" },
+  { nr: 201, name: "HGI GmbH & Co. KG (Sammelkonto)", strasse: "HGI GmbH & Co. KG (Sammelkonto)", plz: "33649", ort: "Bielefeld" },
+  { nr: 206, name: "Auf der Suelte 6 (Konto 206)", strasse: "Auf der Suelte 6", plz: "33699", ort: "Bielefeld" },
   { nr: 224, name: "Im Alten Krug 3", strasse: "Im Alten Krug 3", plz: "33729", ort: "Bielefeld" },
   { nr: 225, name: "Apartmenthaus Ziegelstr. 25", strasse: "Ziegelstr. 25", plz: "33609", ort: "Bielefeld" },
   { nr: 255, name: "Detmolder Str. 55", strasse: "Detmolder Str. 55", plz: "33602", ort: "Bielefeld" },
   { nr: 256, name: "Engerstr. 56", strasse: "Engerstr. 56", plz: "32051", ort: "Herford" },
   { nr: 286, name: "Apartmenthaus Apfelstr. 86", strasse: "Apfelstr. 86", plz: "33613", ort: "Bielefeld" },
+  { nr: 950, name: "WS Auf der Suelte 6", strasse: "Auf der Suelte 6", plz: "33699", ort: "Bielefeld" },
+  { nr: 951, name: "WS Koesliner Str. 8", strasse: "Koesliner Str. 8", plz: "33605", ort: "Bielefeld" },
   // HGI Immobilien GmbH
+  { nr: 300, name: "HGI Immobilien GmbH (Sammelkonto)", strasse: "HGI Immobilien GmbH (Sammelkonto)", plz: "33649", ort: "Bielefeld" },
   { nr: 500, name: "Kafkastr. 74", strasse: "Kafkastr. 74", plz: "33729", ort: "Bielefeld" },
   // HGI Immogroup GmbH
   { nr: 610, name: "Gruete 13A, Haus Rechts", strasse: "Gruete 13A, Haus Rechts", plz: "33813", ort: "Oerlinghausen" },
   { nr: 611, name: "Gruete 13, Haus Links", strasse: "Gruete 13, Haus Links", plz: "33813", ort: "Oerlinghausen" },
   { nr: 637, name: "Juetlandstrasse", strasse: "Juetlandstrasse", plz: "33729", ort: "Bielefeld" },
   { nr: 639, name: "Stromstrasse 6-8", strasse: "Stromstrasse 6-8", plz: "33729", ort: "Bielefeld" },
+  // Private Zuordnung (Tetyana Schroeder) und Sonstige
+  { nr: 900, name: "TS Stargarder Str. 26", strasse: "Stargarder Str. 26", plz: "33699", ort: "Bielefeld" },
+  { nr: 901, name: "TS Auf der Suelte 6", strasse: "Auf der Suelte 6", plz: "33699", ort: "Bielefeld" },
+  { nr: 903, name: "TS Koesliner Str. 8", strasse: "Koesliner Str. 8", plz: "33605", ort: "Bielefeld" },
+  { nr: 904, name: "TS Taxusstr. 12", strasse: "Taxusstr. 12", plz: "33699", ort: "Bielefeld" },
+  { nr: 990, name: "PV-Anlage Strom GbR", strasse: "PV-Anlage Strom GbR", plz: "33649", ort: "Bielefeld" },
 ];
 
 const QUELLE = "objekte.md (WinCasa-Export 05.07.2026, Skill-Referenz Stand 12.07.2026)";
@@ -110,8 +135,20 @@ async function main() {
 
   for (const eintrag of alleObjekte) {
     try {
+      const neueId = `wincasa-${objektNummer(eintrag.nr)}`;
+      const alteId = `wincasa-${eintrag.nr}`;
+      if (alteId !== neueId) {
+        const alt = await prisma.objekt.findUnique({ where: { externeId: alteId } });
+        if (alt) {
+          const neu = await prisma.objekt.findUnique({ where: { externeId: neueId } });
+          if (neu) {
+            throw new Error(`${alteId} und ${neueId} existieren beide, bitte manuell zusammenfuehren`);
+          }
+          await prisma.objekt.update({ where: { id: alt.id }, data: { externeId: neueId } });
+        }
+      }
       await prisma.objekt.upsert({
-        where: { externeId: `wincasa-${eintrag.nr}` },
+        where: { externeId: neueId },
         update: {
           name: eintrag.name,
           strasse: eintrag.strasse,
@@ -123,7 +160,7 @@ async function main() {
           strasse: eintrag.strasse,
           plz: eintrag.plz,
           ort: eintrag.ort,
-          externeId: `wincasa-${eintrag.nr}`,
+          externeId: neueId,
         },
       });
       erfolgreich += 1;
