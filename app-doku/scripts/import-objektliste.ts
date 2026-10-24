@@ -42,8 +42,20 @@
  *
  * Abgleich mit "Objeckte Alle Adressen.xlsx" (Drive, Stand 05.01.2026):
  * Nr. 637 erhaelt die Hausnummer 37 (Juetlandstr. 37), Nr. 200 (Buerohaus HGI)
- * die Strasse Osnabruecker Str. 49. Abweichende PLZ der Datei (015, 016, 038,
- * 200) wurden nicht uebernommen, solange nicht bestaetigt.
+ * die Strasse Osnabruecker Str. 49.
+ *
+ * PLZ-Pruefung 24.10.2026 (Claude, Gegenpruefung durch Edgard Schroeder offen):
+ * - 015 Lange Str. 1: 32139 Spenge (Versicherungsschein "Lange Strasse 1, 32139
+ *   Spenge"; Strassenverzeichnisse). Die 32052 der Adressdatei ist falsch.
+ * - 016 Loheide 16: 33609 (Anschrift der Eigentuemer und Angebot des Dachdeckers
+ *   vom 27.09.2026, ImmoScout24/onlinestreet/dasoertliche). Die 33611 aus dem
+ *   WinCasa-Export und im Kopf der Vulcavo-Unterlagen ist abweichend.
+ * - 038 Guetersloher Str. 38A: 33649 (Strassenschluessel Finanzverwaltung NRW:
+ *   Nr. 38 bis 384A = 33649, Nr. 2 bis 12 = 33647; Vulcavo-Stammdaten, Tickets).
+ *   Der Ordnername "33647" und das Angebot von 2024 sind abweichend.
+ * - 200 Osnabruecker Str. 49: 33649 (Kaufvertrag 04.09.2025 und Briefkopf der HGI;
+ *   33749 gibt es in Bielefeld nicht).
+ * Bei bereits importierten Objekten wird die PLZ nur mit --uebernehmen=16 geaendert.
  *
  * Nr. 87 (WEG Auf dem Busch 44-78) fehlte im Export und wurde am
  * 21.08.2026 von Edgard Schroeder nachgetragen - PLZ/Ort per Rueckfrage
@@ -142,7 +154,7 @@ const WEG_OBJEKTE: ObjektEintrag[] = [
   { nr: 10, name: "Taxusstr. 12", strasse: "Taxusstr. 12", plz: "33699", ort: "Bielefeld" },
   { nr: 12, name: "Myrtenweg 12", strasse: "Myrtenweg 12", plz: "33699", ort: "Bielefeld" },
   { nr: 15, name: "Lange Str. 1", strasse: "Lange Str. 1", plz: "32139", ort: "Spenge" },
-  { nr: 16, name: "Loheide 16", strasse: "Loheide 16", plz: "33611", ort: "Bielefeld" },
+  { nr: 16, name: "Loheide 16", strasse: "Loheide 16", plz: "33609", ort: "Bielefeld" },
   { nr: 17, name: "Nonengrund 3B", strasse: "Nonengrund 3B", plz: "33813", ort: "Oerlinghausen" },
   { nr: 25, name: "Obere Wiesenstr. 25", strasse: "Obere Wiesenstr. 25", plz: "32130", ort: "Hiddenhausen" },
   { nr: 27, name: "Am Erdbeerfeld 27", strasse: "Am Erdbeerfeld 27", plz: "33659", ort: "Bielefeld" },
