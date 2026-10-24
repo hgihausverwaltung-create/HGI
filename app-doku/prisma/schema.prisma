@@ -62,6 +62,23 @@ enum TicketKategorie {
   SONSTIGES
 }
 
+enum Verwaltungsart {
+  WEG
+  MIETVERWALTUNG
+}
+
+enum Kontoart {
+  GEBAEUDE
+  SAMMELKONTO
+  TS_WS_KONTO
+}
+
+enum ObjektStatus {
+  AKTIV
+  IN_PLANUNG
+  ARCHIVIERT
+}
+
 model User {
   id           String   @id @default(uuid())
   email        String   @unique
@@ -71,7 +88,7 @@ model User {
   createdAt    DateTime @default(now())
 
   hochgeladeneDokumente Dokument[]
-  zugewieseneTickets    Ticket[]         @relation("TicketZugewiesenAn")
+  zugewieseneTickets    Ticket[]          @relation("TicketZugewiesenAn")
   ticketKommentare      TicketKommentar[]
 }
 
@@ -85,27 +102,34 @@ model Objekt {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  einheiten        Einheit[]
-  dokumente        Dokument[]
-  versammlungen    Versammlung[]
+  // Stammdaten-Klassifikation (null = noch nicht geklaert, nie raten)
+  verwaltungsart   Verwaltungsart?
+  kontoart         Kontoart?
+  gesellschaft     String?
+  status           ObjektStatus    @default(AKTIV)
+  stammdatenQuelle String?
+
+  einheiten         Einheit[]
+  dokumente         Dokument[]
+  versammlungen     Versammlung[]
   wirtschaftsplaene Wirtschaftsplan[]
-  tickets          Ticket[]
+  tickets           Ticket[]
 }
 
 model Einheit {
-  id         String      @id @default(uuid())
-  objektId   String
-  objekt     Objekt      @relation(fields: [objektId], references: [id], onDelete: Cascade)
+  id          String      @id @default(uuid())
+  objektId    String
+  objekt      Objekt      @relation(fields: [objektId], references: [id], onDelete: Cascade)
   bezeichnung String
-  typ        EinheitTyp?
-  externeId  String?     @unique
-  createdAt  DateTime    @default(now())
+  typ         EinheitTyp?
+  externeId   String?     @unique
+  createdAt   DateTime    @default(now())
 
-  eigentuemer EinheitEigentuemer[]
-  mieter      Mieter[]
-  dokumente   Dokument[]
+  eigentuemer            EinheitEigentuemer[]
+  mieter                 Mieter[]
+  dokumente              Dokument[]
   hausgeldSollPositionen HausgeldSoll[]
-  tickets     Ticket[]
+  tickets                Ticket[]
 
   @@index([objektId])
 }
@@ -150,43 +174,43 @@ model Mieter {
 }
 
 model DokumentKategorie {
-  id        String     @id @default(uuid())
-  name      String     @unique
-  sortOrder Int        @default(0)
+  id        String @id @default(uuid())
+  name      String @unique
+  sortOrder Int    @default(0)
 
   dokumente Dokument[]
 }
 
 model Dokument {
-  id               String            @id @default(uuid())
-  dateiname        String
-  speicherPfad     String
-  mimeType         String
-  dateigroesse     Int
-  beschreibung     String?
+  id           String  @id @default(uuid())
+  dateiname    String
+  speicherPfad String
+  mimeType     String
+  dateigroesse Int
+  beschreibung String?
 
-  kategorieId      String
-  kategorie        DokumentKategorie @relation(fields: [kategorieId], references: [id])
+  kategorieId String
+  kategorie   DokumentKategorie @relation(fields: [kategorieId], references: [id])
 
-  objektId         String
-  objekt           Objekt            @relation(fields: [objektId], references: [id], onDelete: Cascade)
+  objektId String
+  objekt   Objekt @relation(fields: [objektId], references: [id], onDelete: Cascade)
 
-  einheitId        String?
-  einheit          Einheit?          @relation(fields: [einheitId], references: [id], onDelete: SetNull)
+  einheitId String?
+  einheit   Einheit? @relation(fields: [einheitId], references: [id], onDelete: SetNull)
 
-  eigentuemerId    String?
-  eigentuemer      Eigentuemer?      @relation(fields: [eigentuemerId], references: [id], onDelete: SetNull)
+  eigentuemerId String?
+  eigentuemer   Eigentuemer? @relation(fields: [eigentuemerId], references: [id], onDelete: SetNull)
 
-  mieterId         String?
-  mieter           Mieter?           @relation(fields: [mieterId], references: [id], onDelete: SetNull)
+  mieterId String?
+  mieter   Mieter? @relation(fields: [mieterId], references: [id], onDelete: SetNull)
 
   hochgeladenVonId String
-  hochgeladenVon   User              @relation(fields: [hochgeladenVonId], references: [id])
+  hochgeladenVon   User   @relation(fields: [hochgeladenVonId], references: [id])
 
-  hochgeladenAm    DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
+  hochgeladenAm DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
-  versammlungen    Versammlung[]
+  versammlungen Versammlung[]
 
   @@index([kategorieId])
   @@index([objektId])
@@ -201,14 +225,14 @@ model Versammlung {
   einladungsdatum DateTime?
   status          VersammlungStatus @default(GEPLANT)
 
-  objektId        String
-  objekt          Objekt            @relation(fields: [objektId], references: [id], onDelete: Cascade)
+  objektId String
+  objekt   Objekt @relation(fields: [objektId], references: [id], onDelete: Cascade)
 
-  dokumentId      String?
-  dokument        Dokument?         @relation(fields: [dokumentId], references: [id], onDelete: SetNull)
+  dokumentId String?
+  dokument   Dokument? @relation(fields: [dokumentId], references: [id], onDelete: SetNull)
 
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   tagesordnungspunkte Tagesordnungspunkt[]
   wirtschaftsplaene   Wirtschaftsplan[]
@@ -228,11 +252,11 @@ model Tagesordnungspunkt {
   beschlussvorschlag String?
   ergebnis           TagesordnungsErgebnis?
 
-  createdAt          DateTime               @default(now())
-  updatedAt          DateTime               @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  @@index([versammlungId])
   @@unique([versammlungId, reihenfolge])
+  @@index([versammlungId])
 }
 
 model Wirtschaftsplan {
@@ -240,14 +264,14 @@ model Wirtschaftsplan {
   wirtschaftsjahr Int
   status          WirtschaftsplanStatus @default(ENTWURF)
 
-  objektId        String
-  objekt          Objekt                @relation(fields: [objektId], references: [id], onDelete: Cascade)
+  objektId String
+  objekt   Objekt @relation(fields: [objektId], references: [id], onDelete: Cascade)
 
-  versammlungId   String?
-  versammlung     Versammlung?          @relation(fields: [versammlungId], references: [id], onDelete: SetNull)
+  versammlungId String?
+  versammlung   Versammlung? @relation(fields: [versammlungId], references: [id], onDelete: SetNull)
 
-  createdAt       DateTime              @default(now())
-  updatedAt       DateTime              @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   hausgeldSollPositionen HausgeldSoll[]
 
@@ -272,36 +296,36 @@ model HausgeldSoll {
 }
 
 model Ticket {
-  id              String           @id @default(uuid())
-  titel           String
-  beschreibung    String?
-  kategorie       TicketKategorie  @default(SONSTIGES)
-  prioritaet      TicketPrioritaet @default(NORMAL)
-  status          TicketStatus     @default(OFFEN)
+  id           String           @id @default(uuid())
+  titel        String
+  beschreibung String?
+  kategorie    TicketKategorie  @default(SONSTIGES)
+  prioritaet   TicketPrioritaet @default(NORMAL)
+  status       TicketStatus     @default(OFFEN)
 
-  objektId        String
-  objekt          Objekt           @relation(fields: [objektId], references: [id], onDelete: Cascade)
+  objektId String
+  objekt   Objekt @relation(fields: [objektId], references: [id], onDelete: Cascade)
 
-  einheitId       String?
-  einheit         Einheit?         @relation(fields: [einheitId], references: [id], onDelete: SetNull)
+  einheitId String?
+  einheit   Einheit? @relation(fields: [einheitId], references: [id], onDelete: SetNull)
 
-  mieterId        String?
-  mieter          Mieter?          @relation(fields: [mieterId], references: [id], onDelete: SetNull)
+  mieterId String?
+  mieter   Mieter? @relation(fields: [mieterId], references: [id], onDelete: SetNull)
 
-  eigentuemerId   String?
-  eigentuemer     Eigentuemer?     @relation(fields: [eigentuemerId], references: [id], onDelete: SetNull)
+  eigentuemerId String?
+  eigentuemer   Eigentuemer? @relation(fields: [eigentuemerId], references: [id], onDelete: SetNull)
 
-  zugewiesenAnId  String?
-  zugewiesenAn    User?            @relation("TicketZugewiesenAn", fields: [zugewiesenAnId], references: [id], onDelete: SetNull)
+  zugewiesenAnId String?
+  zugewiesenAn   User?   @relation("TicketZugewiesenAn", fields: [zugewiesenAnId], references: [id], onDelete: SetNull)
 
-  externeId       String?          @unique
+  externeId String? @unique
 
-  gemeldetAm      DateTime         @default(now())
-  erledigtAm      DateTime?
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
+  gemeldetAm DateTime  @default(now())
+  erledigtAm DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
 
-  kommentare      TicketKommentar[]
+  kommentare TicketKommentar[]
 
   @@index([objektId])
   @@index([status])
@@ -310,26 +334,26 @@ model Ticket {
 }
 
 model TicketKommentar {
-  id             String   @id @default(uuid())
-  ticketId       String
-  ticket         Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
-  text           String
-  erstelltVonId  String
-  erstelltVon    User     @relation(fields: [erstelltVonId], references: [id])
-  createdAt      DateTime @default(now())
+  id            String   @id @default(uuid())
+  ticketId      String
+  ticket        Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  text          String
+  erstelltVonId String
+  erstelltVon   User     @relation(fields: [erstelltVonId], references: [id])
+  createdAt     DateTime @default(now())
 
   @@index([ticketId])
 }
 
 model ImportJob {
-  id              String          @id @default(uuid())
-  quelle          String
-  status          ImportJobStatus @default(PENDING)
-  zeilenGesamt    Int             @default(0)
-  zeilenErfolgreich Int           @default(0)
-  zeilenFehler    Int             @default(0)
-  fehlerLog       String?
-  startedAt       DateTime?
-  finishedAt      DateTime?
-  createdAt       DateTime        @default(now())
+  id                String          @id @default(uuid())
+  quelle            String
+  status            ImportJobStatus @default(PENDING)
+  zeilenGesamt      Int             @default(0)
+  zeilenErfolgreich Int             @default(0)
+  zeilenFehler      Int             @default(0)
+  fehlerLog         String?
+  startedAt         DateTime?
+  finishedAt        DateTime?
+  createdAt         DateTime        @default(now())
 }

@@ -8,6 +8,10 @@ import { VERSAMMLUNG_STATUS_LABELS } from "@/lib/validation/versammlung";
 import { WIRTSCHAFTSPLAN_STATUS_LABELS } from "@/lib/validation/wirtschaftsplan";
 import { TICKET_STATUS_LABELS } from "@/lib/validation/ticket";
 
+const VERWALTUNGSART_LABELS = { WEG: "WEG", MIETVERWALTUNG: "Mietverwaltung" } as const;
+const KONTOART_LABELS = { GEBAEUDE: "Gebaeude", SAMMELKONTO: "Sammelkonto", TS_WS_KONTO: "TS-/WS-Konto" } as const;
+const OBJEKT_STATUS_LABELS = { AKTIV: "Aktiv", IN_PLANUNG: "In Planung", ARCHIVIERT: "Archiviert" } as const;
+
 export default async function ObjektDetailPage({
   params,
 }: {
@@ -34,6 +38,16 @@ export default async function ObjektDetailPage({
         <h1 className="text-xl font-semibold text-zinc-900">{objekt.name}</h1>
         <p className="text-sm text-zinc-500">
           {objekt.strasse}, {objekt.plz} {objekt.ort}
+        </p>
+        <p className="text-xs text-zinc-500">
+          {[
+            objekt.verwaltungsart && VERWALTUNGSART_LABELS[objekt.verwaltungsart],
+            objekt.kontoart && KONTOART_LABELS[objekt.kontoart],
+            objekt.gesellschaft,
+            OBJEKT_STATUS_LABELS[objekt.status],
+          ]
+            .filter(Boolean)
+            .join(" - ")}
         </p>
       </div>
 

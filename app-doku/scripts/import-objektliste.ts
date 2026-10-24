@@ -17,8 +17,9 @@
  * - Synthetisches Musterhaus 996.
  * - Nr. 011 (frueher Fuerstenweg 1-3): archiviert, laut Edgard Schroeder
  *   24.10.2026 nicht mehr aktiv.
- * - Weitere in Paperless gefuehrte Nummern ohne PLZ/Ort (u. a. zwei WEG):
- *   werden nicht erfunden, erst nach Nennung durch Edgard Schroeder.
+ * - Weitere in Paperless gefuehrte Nummern ohne PLZ/Ort: werden nicht erfunden,
+ *   erst nach Nennung durch Edgard Schroeder. (Die zwei fehlenden WEG sind mit
+ *   003 und 072 am 24.10.2026 nachgetragen.)
  *
  * Nr. 227 (kuenftig Ziegelstrasse 27, 33609 Bielefeld): am 24.10.2026 von
  * Edgard Schroeder genannt. Mietobjekt (kein WEG) der HGI GmbH & Co. KG,
@@ -57,7 +58,10 @@
  */
 import "dotenv/config";
 import { PrismaPg } from "@prisma/adapter-pg";
+import { mkdir, writeFile } from "node:fs/promises";
+import path from "node:path";
 import { PrismaClient } from "../app/generated/prisma/client";
+import type { Kontoart, ObjektStatus, Verwaltungsart } from "../app/generated/prisma/enums";
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
@@ -92,6 +96,35 @@ type ObjektEintrag = {
   plz: string;
   ort: string;
 };
+
+// Klassifikation aus der Gruppierung der Quelle (WEG-Liste, Kommentarbloecke der
+// Mietverwaltungsliste) und den Entscheidungen vom 24.10.2026. Nicht Bekanntes
+// bleibt leer (null) statt geraten; so z. B. bei Gesellschaft der Fremdverwaltung
+// und der privaten Zuordnung.
+type Klassifikation = {
+  verwaltungsart: Verwaltungsart;
+  kontoart: Kontoart;
+  gesellschaft: string | null;
+  status: ObjektStatus;
+};
+
+const SAMMELKONTEN = new Set([201, 300, 990]);
+const TS_WS_KONTEN = new Set([900, 901, 903, 904, 950, 951]);
+const GESELLSCHAFT_NACH_NR = new Map<number, string>([
+  ...[200, 201, 206, 224, 225, 227, 255, 256, 286, 950, 951].map((nr): [number, string] => [nr, "HGI GmbH & Co. KG"]),
+  ...[300, 500].map((nr): [number, string] => [nr, "HGI Immobilien GmbH"]),
+  ...[610, 611, 637, 639].map((nr): [number, string] => [nr, "HGI Immogroup GmbH"]),
+]);
+const IN_PLANUNG = new Set([227]);
+
+function klassifiziere(nr: number, istWeg: boolean): Klassifikation {
+  return {
+    verwaltungsart: istWeg ? "WEG" : "MIETVERWALTUNG",
+    kontoart: SAMMELKONTEN.has(nr) ? "SAMMELKONTO" : TS_WS_KONTEN.has(nr) ? "TS_WS_KONTO" : "GEBAEUDE",
+    gesellschaft: GESELLSCHAFT_NACH_NR.get(nr) ?? null,
+    status: IN_PLANUNG.has(nr) ? "IN_PLANUNG" : "AKTIV",
+  };
+}
 
 const WEG_OBJEKTE: ObjektEintrag[] = [
   { nr: 1, name: "Brueckenstr. 66, 66a", strasse: "Brueckenstr. 66, 66a", plz: "33607", ort: "Bielefeld" },
@@ -171,68 +204,227 @@ const MIETVERWALTUNG_OBJEKTE: ObjektEintrag[] = [
   { nr: 990, name: "PV-Anlage Strom GbR", strasse: "PV-Anlage Strom GbR", plz: "33649", ort: "Bielefeld" },
 ];
 
-const QUELLE = "objekte.md (WinCasa-Export 05.07.2026, Skill-Referenz Stand 12.07.2026)";
+const QUELLE = "objekte.md (WinCasa-Export 05.07.2026, Skill-Referenz Stand 12.07.2026), Nachtraege Edgard Schroeder 24.10.2026";
 
-async function main() {
-  const alleObjekte = [...WEG_OBJEKTE, ...MIETVERWALTUNG_OBJEKTE];
+type Ziel = ObjektEintrag &
+  Klassifikation & { neueId: string; alteId: string; anzeige: string; strasseSauber: string };
 
-  const job = await prisma.importJob.create({
-    data: { quelle: QUELLE, status: "RUNNING", startedAt: new Date(), zeilenGesamt: alleObjekte.length },
-  });
+type Datenbank = Pick<PrismaClient, "objekt">;
+type Aktion = "NEU" | "UMBENENNEN" | "UNVERAENDERT" | "AENDERN" | "KONFLIKT";
+type PlanZeile = { ziel: Ziel; aktion: Aktion; vorhanden?: VorhandenesObjekt; daten?: Record<string, unknown>; konflikte: string[] };
+type VorhandenesObjekt = NonNullable<Awaited<ReturnType<Datenbank["objekt"]["findFirst"]>>>;
 
-  let erfolgreich = 0;
+function parseArgs(argv: string[]) {
+  const ausfuehren = argv.includes("--ausfuehren");
+  const arg = argv.find((a) => a.startsWith("--uebernehmen="));
+  const wert = arg?.slice("--uebernehmen=".length) ?? "";
+  const alle = wert === "alle";
+  const nummern = new Set(
+    alle ? [] : wert.split(",").filter(Boolean).map((n) => {
+      const nr = Number(n);
+      if (!Number.isInteger(nr)) throw new Error(`--uebernehmen: "${n}" ist keine Objektnummer`);
+      return nr;
+    }),
+  );
+  return { ausfuehren, uebernehmenAlle: alle, uebernehmenNummern: nummern };
+}
+
+function ziele(): { ziele: Ziel[]; fehler: string[] } {
   const fehler: string[] = [];
-
-  for (const eintrag of alleObjekte) {
-    try {
-      const neueId = `wincasa-${objektNummer(eintrag.nr)}`;
-      const alteId = `wincasa-${eintrag.nr}`;
-      if (alteId !== neueId) {
-        const alt = await prisma.objekt.findUnique({ where: { externeId: alteId } });
-        if (alt) {
-          const neu = await prisma.objekt.findUnique({ where: { externeId: neueId } });
-          if (neu) {
-            throw new Error(`${alteId} und ${neueId} existieren beide, bitte manuell zusammenfuehren`);
-          }
-          await prisma.objekt.update({ where: { id: alt.id }, data: { externeId: neueId } });
-        }
+  const liste: Ziel[] = [];
+  const gesehenNr = new Set<number>();
+  for (const [eintraege, istWeg] of [[WEG_OBJEKTE, true], [MIETVERWALTUNG_OBJEKTE, false]] as const) {
+    for (const e of eintraege) {
+      try {
+        if (gesehenNr.has(e.nr)) throw new Error("Objektnummer doppelt in der Liste");
+        gesehenNr.add(e.nr);
+        liste.push({
+          ...e,
+          ...klassifiziere(e.nr, istWeg),
+          neueId: `wincasa-${objektNummer(e.nr)}`,
+          alteId: `wincasa-${e.nr}`,
+          anzeige: anzeigename(e),
+          strasseSauber: bereinige(e.strasse),
+        });
+      } catch (err) {
+        fehler.push(`Nr. ${e.nr} (${e.name}): ${err instanceof Error ? err.message : String(err)}`);
       }
-      await prisma.objekt.upsert({
-        where: { externeId: neueId },
-        update: {
-          name: anzeigename(eintrag),
-          strasse: bereinige(eintrag.strasse),
-          plz: eintrag.plz,
-          ort: eintrag.ort,
-        },
-        create: {
-          name: anzeigename(eintrag),
-          strasse: bereinige(eintrag.strasse),
-          plz: eintrag.plz,
-          ort: eintrag.ort,
-          externeId: neueId,
-        },
-      });
-      erfolgreich += 1;
-    } catch (err) {
-      fehler.push(`Nr. ${eintrag.nr} (${eintrag.name}): ${err instanceof Error ? err.message : String(err)}`);
     }
   }
+  return { ziele: liste, fehler };
+}
 
-  await prisma.importJob.update({
-    where: { id: job.id },
-    data: {
-      status: fehler.length === 0 ? "DONE" : "FAILED",
-      zeilenErfolgreich: erfolgreich,
-      zeilenFehler: fehler.length,
-      fehlerLog: fehler.length > 0 ? fehler.join("\n") : null,
-      finishedAt: new Date(),
-    },
+// Ermittelt je Objekt, was zu tun ist. Liest nur, schreibt nichts.
+async function plane(db: Datenbank, alle: Ziel[], uebernehmen: { alle: boolean; nummern: Set<number> }) {
+  const vorhandene = await db.objekt.findMany({
+    where: { externeId: { in: alle.flatMap((z) => [z.neueId, z.alteId]) } },
   });
+  const nachId = new Map(vorhandene.map((o) => [o.externeId, o]));
+  const fehler: string[] = [];
+  const zeilen: PlanZeile[] = [];
 
-  console.log(`Import abgeschlossen: ${erfolgreich}/${alleObjekte.length} Objekte importiert.`);
-  if (fehler.length > 0) {
-    console.error("Fehler:\n" + fehler.join("\n"));
+  for (const z of alle) {
+    const neu = nachId.get(z.neueId);
+    const alt = z.alteId !== z.neueId ? nachId.get(z.alteId) : undefined;
+    if (neu && alt) {
+      fehler.push(`Nr. ${z.nr}: ${z.alteId} und ${z.neueId} existieren beide, bitte manuell zusammenfuehren`);
+      continue;
+    }
+    const vorhanden = neu ?? alt;
+    if (!vorhanden) {
+      zeilen.push({
+        ziel: z,
+        aktion: "NEU",
+        konflikte: [],
+        daten: {
+          name: z.anzeige, strasse: z.strasseSauber, plz: z.plz, ort: z.ort, externeId: z.neueId,
+          verwaltungsart: z.verwaltungsart, kontoart: z.kontoart, gesellschaft: z.gesellschaft, status: z.status,
+          stammdatenQuelle: QUELLE,
+        },
+      });
+      continue;
+    }
+
+    const daten: Record<string, unknown> = {};
+    const konflikte: string[] = [];
+    if (alt) daten.externeId = z.neueId;
+
+    const darfUeberschreiben = uebernehmen.alle || uebernehmen.nummern.has(z.nr);
+    const stamm: [string, string, string][] = [
+      ["name", vorhanden.name, z.anzeige],
+      ["strasse", vorhanden.strasse, z.strasseSauber],
+      ["plz", vorhanden.plz, z.plz],
+      ["ort", vorhanden.ort, z.ort],
+    ];
+    for (const [feld, istWert, sollWert] of stamm) {
+      if (istWert === sollWert) continue;
+      if (darfUeberschreiben) daten[feld] = sollWert;
+      else konflikte.push(`${feld}: DB "${istWert}" / Liste "${sollWert}"`);
+    }
+    // Klassifikation: leere Felder fuellen, abweichende Werte als Konflikt melden.
+    const klass: [string, unknown, unknown][] = [
+      ["verwaltungsart", vorhanden.verwaltungsart, z.verwaltungsart],
+      ["kontoart", vorhanden.kontoart, z.kontoart],
+      ["gesellschaft", vorhanden.gesellschaft, z.gesellschaft],
+    ];
+    for (const [feld, istWert, sollWert] of klass) {
+      if (istWert === sollWert || sollWert === null) continue;
+      if (istWert === null) daten[feld] = sollWert;
+      else if (darfUeberschreiben) daten[feld] = sollWert;
+      else konflikte.push(`${feld}: DB "${istWert}" / Liste "${sollWert}"`);
+    }
+    // status hat einen Default (AKTIV): nur von AKTIV auf IN_PLANUNG heben, nie zurueckstufen.
+    if (vorhanden.status !== z.status) {
+      if (darfUeberschreiben || (vorhanden.status === "AKTIV" && z.status === "IN_PLANUNG")) daten.status = z.status;
+      else konflikte.push(`status: DB "${vorhanden.status}" / Liste "${z.status}"`);
+    }
+    if (Object.keys(daten).length > 0 && vorhanden.stammdatenQuelle !== QUELLE) daten.stammdatenQuelle = QUELLE;
+
+    const aktion: Aktion =
+      konflikte.length > 0 ? "KONFLIKT" : alt ? "UMBENENNEN" : Object.keys(daten).length > 0 ? "AENDERN" : "UNVERAENDERT";
+    // Ein Konflikt blockiert nicht die uebrigen, unstrittigen Felder desselben Objekts.
+    zeilen.push({ ziel: z, aktion, vorhanden, daten, konflikte });
+  }
+  return { zeilen, fehler };
+}
+
+function bericht(zeilen: PlanZeile[]): string {
+  const anzahl = (a: Aktion) => zeilen.filter((z) => z.aktion === a).length;
+  const kopf =
+    `Neu: ${anzahl("NEU")}, Umbenennen: ${anzahl("UMBENENNEN")}, Aendern: ${anzahl("AENDERN")}, ` +
+    `Unveraendert: ${anzahl("UNVERAENDERT")}, Konflikt: ${anzahl("KONFLIKT")}`;
+  const details = zeilen
+    .filter((z) => z.aktion !== "UNVERAENDERT")
+    .map((z) => {
+      const felder = Object.keys(z.daten ?? {}).filter((f) => f !== "stammdatenQuelle");
+      return `  ${z.aktion.padEnd(10)} ${objektNummer(z.ziel.nr)} ${z.ziel.anzeige}` +
+        (z.aktion !== "NEU" && felder.length > 0 ? ` -> setzt: ${felder.join(", ")}` : "") +
+        z.konflikte.map((k) => `\n             Konflikt ${k}`).join("");
+    });
+  return [kopf, ...details].join("\n");
+}
+
+async function main() {
+  const { ausfuehren, uebernehmenAlle, uebernehmenNummern } = parseArgs(process.argv.slice(2));
+  const uebernehmen = { alle: uebernehmenAlle, nummern: uebernehmenNummern };
+  const { ziele: alle, fehler: vorabFehler } = ziele();
+
+  if (!ausfuehren) {
+    const { zeilen, fehler } = await plane(prisma, alle, uebernehmen);
+    const alleFehler = [...vorabFehler, ...fehler];
+    console.log("PROBELAUF - es wird nichts geschrieben. Zum Schreiben --ausfuehren angeben.");
+    console.log(bericht(zeilen));
+    if (alleFehler.length > 0) {
+      console.error("Fehler (Ausfuehren waere abgebrochen):\n" + alleFehler.join("\n"));
+      process.exitCode = 1;
+    }
+    return;
+  }
+
+  const job = await prisma.importJob.create({
+    data: { quelle: QUELLE, status: "RUNNING", startedAt: new Date(), zeilenGesamt: alle.length },
+  });
+  let backupDatei: string | null = null;
+  try {
+    if (vorabFehler.length > 0) throw new Error(vorabFehler.join("\n"));
+    const ergebnis = await prisma.$transaction(
+      async (tx) => {
+        const { zeilen, fehler } = await plane(tx, alle, uebernehmen);
+        if (fehler.length > 0) throw new Error(fehler.join("\n"));
+
+        const betroffen = zeilen.filter((z) => z.vorhanden && z.daten && Object.keys(z.daten).length > 0);
+        if (betroffen.length > 0) {
+          const ordner = path.join(process.env.STORAGE_ROOT ?? "./storage", "import-backups");
+          await mkdir(ordner, { recursive: true });
+          backupDatei = path.join(ordner, `objektliste-${job.id}.json`);
+          await writeFile(
+            backupDatei,
+            JSON.stringify({ importJobId: job.id, quelle: QUELLE, vorwerte: betroffen.map((z) => z.vorhanden) }, null, 2),
+          );
+        }
+        for (const z of zeilen) {
+          if (z.aktion === "NEU") {
+            await tx.objekt.create({ data: z.daten as never });
+          } else if (z.vorhanden && z.daten && Object.keys(z.daten).length > 0) {
+            await tx.objekt.update({ where: { id: z.vorhanden.id }, data: z.daten as never });
+          }
+        }
+        return zeilen;
+      },
+      { timeout: 60_000 },
+    );
+
+    const konflikte = ergebnis.filter((z) => z.aktion === "KONFLIKT");
+    await prisma.importJob.update({
+      where: { id: job.id },
+      data: {
+        status: "DONE",
+        zeilenErfolgreich: ergebnis.length - konflikte.length,
+        zeilenFehler: konflikte.length,
+        fehlerLog:
+          konflikte.length > 0
+            ? "KONFLIKTE (Stammdaten nicht ueberschrieben, mit --uebernehmen aufloesen):\n" +
+              konflikte.map((z) => `Nr. ${z.ziel.nr}: ${z.konflikte.join("; ")}`).join("\n")
+            : null,
+        finishedAt: new Date(),
+      },
+    });
+    console.log(bericht(ergebnis));
+    console.log(`Transaktion abgeschlossen. ImportJob ${job.id}.`);
+    if (backupDatei) console.log(`Vorwerte gesichert in ${backupDatei}`);
+    if (konflikte.length > 0) console.log(`${konflikte.length} Konflikt(e) offen, siehe oben.`);
+  } catch (err) {
+    const meldung = err instanceof Error ? err.message : String(err);
+    await prisma.importJob.update({
+      where: { id: job.id },
+      data: {
+        status: "FAILED",
+        zeilenFehler: 1,
+        fehlerLog: `Transaktion zurueckgerollt, es wurde nichts geaendert.\n${meldung}`,
+        finishedAt: new Date(),
+      },
+    });
+    console.error(`FEHLER - nichts geaendert (zurueckgerollt):\n${meldung}`);
     process.exitCode = 1;
   }
 }
