@@ -32,6 +32,11 @@
  * Edgard Schroeder am 24.10.2026 bestaetigt, PLZ/Ort aus dem Drive-Ordner
  * "WEG 072".
  *
+ * Abgleich mit "Objeckte Alle Adressen.xlsx" (Drive, Stand 05.01.2026):
+ * Nr. 637 erhaelt die Hausnummer 37 (Juetlandstr. 37), Nr. 200 (Buerohaus HGI)
+ * die Strasse Osnabruecker Str. 49. Abweichende PLZ der Datei (015, 016, 038,
+ * 200) wurden nicht uebernommen, solange nicht bestaetigt.
+ *
  * Nr. 87 (WEG Auf dem Busch 44-78) fehlte im Export und wurde am
  * 21.08.2026 von Edgard Schroeder nachgetragen - PLZ/Ort per Rueckfrage
  * bestaetigt (gleiche Strasse wie Nr. 2, 33699 Bielefeld).
@@ -137,7 +142,7 @@ const MIETVERWALTUNG_OBJEKTE: ObjektEintrag[] = [
   { nr: 183, name: "Joellenbecker Str. 183", strasse: "Joellenbecker Str. 183", plz: "33619", ort: "Bielefeld" },
   { nr: 902, name: "Am Sonnenberg 2", strasse: "Am Sonnenberg 2", plz: "32105", ort: "Bad Salzuflen" },
   // HGI GmbH & Co. KG
-  { nr: 200, name: "Buerohaus HGI", strasse: "Buerohaus HGI", plz: "33649", ort: "Bielefeld" },
+  { nr: 200, name: "Buerohaus HGI", strasse: "Osnabruecker Str. 49", plz: "33649", ort: "Bielefeld" },
   { nr: 201, name: "HGI GmbH & Co. KG (Sammelkonto)", strasse: "HGI GmbH & Co. KG (Sammelkonto)", plz: "33649", ort: "Bielefeld" },
   { nr: 206, name: "Auf der Suelte 6", strasse: "Auf der Suelte 6", plz: "33699", ort: "Bielefeld" },
   { nr: 224, name: "Im Alten Krug 3", strasse: "Im Alten Krug 3", plz: "33729", ort: "Bielefeld" },
@@ -156,7 +161,7 @@ const MIETVERWALTUNG_OBJEKTE: ObjektEintrag[] = [
   // HGI Immogroup GmbH
   { nr: 610, name: "Gruete 13A, Haus Rechts", strasse: "Gruete 13A, Haus Rechts", plz: "33813", ort: "Oerlinghausen" },
   { nr: 611, name: "Gruete 13, Haus Links", strasse: "Gruete 13, Haus Links", plz: "33813", ort: "Oerlinghausen" },
-  { nr: 637, name: "Juetlandstrasse", strasse: "Juetlandstrasse", plz: "33729", ort: "Bielefeld" },
+  { nr: 637, name: "Juetlandstr. 37", strasse: "Juetlandstr. 37", plz: "33729", ort: "Bielefeld" },
   { nr: 639, name: "Stromstrasse 6-8", strasse: "Stromstrasse 6-8", plz: "33729", ort: "Bielefeld" },
   // Private Zuordnung (Tetyana Schroeder) und Sonstige
   { nr: 900, name: "TS Stargarder Str. 26", strasse: "Stargarder Str. 26", plz: "33699", ort: "Bielefeld" },
