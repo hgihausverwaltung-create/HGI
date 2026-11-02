@@ -287,7 +287,7 @@ Hinweis: Die zentrale HGI-Fristenliste bleibt der Google-Kalender „HGI Fristen
 
 - 1 Objekt: **WEG Queller Str. 72, 33649 Bielefeld** (Objekt 72), 4 Einheiten, 346,23 m², 5 Eigentümer, 7 Kreditoren
 - 6 offene Tickets (T-1 bis T-7, ohne T-6), alle seit 06.10.2026. **T-1 „Handlauf locker“ hat Priorität hoch, keine Fälligkeit und keinen Handwerker**
-- Hausgeld-Rückstand 846,32 € aus 24 Sollstellungen, aufgeschlüsselt in Abschnitt 21.6. Eine frühere Annahme, es sei „keine Zahlung verbucht“, war falsch: Bezahlt sind 8.411,50 € Hausgeld
+- Hausgeld-Rückstand 846,32 € aus 24 Sollstellungen, aufgeschlüsselt in Abschnitt 21.7. Eine frühere Annahme, es sei „keine Zahlung verbucht“, war falsch: Bezahlt sind 8.411,50 € Hausgeld
 - Keine Anlagen, keine Zähler erfasst, obwohl Wärmepumpe und Lüftungsanlage existieren (T-4, T-5)
 - 1 ETV: außerordentlich, 28.09.2026, Verwalterbestellung. Status „geplant“, 0 Beschlüsse, kein Protokoll
 - Posteingang leer, kein Postfach, keine Signatur
