@@ -287,7 +287,7 @@ Hinweis: Die zentrale HGI-Fristenliste bleibt der Google-Kalender „HGI Fristen
 
 - 1 Objekt: **WEG Queller Str. 72, 33649 Bielefeld** (Objekt 72), 4 Einheiten, 346,23 m², 5 Eigentümer, 7 Kreditoren
 - 6 offene Tickets (T-1 bis T-7, ohne T-6), alle seit 06.10.2026. **T-1 „Handlauf locker“ hat Priorität hoch, keine Fälligkeit und keinen Handwerker**
-- Hausgeld-Rückstand 846,32 € aus 24 Sollstellungen. Vermutlich fehlen Zahlungszuordnungen, weil keine einzige Zahlung verbucht ist [wahrscheinlich]
+- Hausgeld-Rückstand 846,32 € aus 24 Sollstellungen, aufgeschlüsselt in Abschnitt 21.6. Eine frühere Annahme, es sei „keine Zahlung verbucht“, war falsch: Bezahlt sind 8.411,50 € Hausgeld
 - Keine Anlagen, keine Zähler erfasst, obwohl Wärmepumpe und Lüftungsanlage existieren (T-4, T-5)
 - 1 ETV: außerordentlich, 28.09.2026, Verwalterbestellung. Status „geplant“, 0 Beschlüsse, kein Protokoll
 - Posteingang leer, kein Postfach, keine Signatur
@@ -301,3 +301,93 @@ Hinweis: Die zentrale HGI-Fristenliste bleibt der Google-Kalender „HGI Fristen
 5. Massenaktionen (Mahnlauf, Import, Honorarlauf, Automation): erst Vorschau bzw. Test, dann mit gedeckelter Anzahl. Bei Importen vorher Datensicherung.
 6. Kündigungen, Abmahnungen, Vollmachten und Verwalterzustimmungen nur nach Rücksprache mit Herrn Schröder.
 7. Fristen aus Verwaltio in den Kalender „HGI Fristen“ übernehmen (Agent 00).
+
+---
+
+## 21. Finanzen im Detail: Sollstellung, Buchhaltung, Kontoabruf, Lastschrift, Bankabgleich
+
+Stand: 02.11.2026. Alle Werkzeuge dieses Abschnitts wurden mit ihrer vollständigen Beschreibung geprüft, außer denen mit \*.
+
+### 21.1 Sollstellungen anlegen
+
+| Vorgang | Über die Schnittstelle | Werkzeug / Weg |
+|---|---|---|
+| Miet-Sollstellungen eines Monats für alle Mieter | **ja** | `generate_payments` (Monat, Jahr). Bereits vorhandene werden nicht überschrieben |
+| Mietänderung ab Stichtag (auch rückwirkend) | **ja** | `edit_tenant` mit `wirksamAb`: Offene Sollstellungen werden angepasst, bereits gebuchte storniert und neu gebucht, bezahlte bleiben |
+| Staffel- und Indexmiete | **ja** (Stammdaten) | `edit_tenant` (`rentSteps`, Index-Felder) |
+| Hausgeld-Sollstellungen WEG | **ja, indirekt** | Aus dem Wirtschaftsplan (`create_wirtschaftsplan` / `edit_wirtschaftsplan`, inkl. `gueltigAb`, Turnus, Rundung). Ohne Wirtschaftsplan aus dem Hausgeld der Einheit (`edit_unit`: `hausgeld` + `hausgeldReserve`) |
+| Nachzahlungen aus der Jahresabrechnung | **ja**, nur nach Beschluss | `abrechnungsspitzen_buchen` (Zahlungsziel Standard 30 Tage) |
+| Kautionsforderung | **ja** | `edit_tenant` (`deposit`, `depositStatus` „offen“) |
+| Einzelne freie Sollstellung (Sonderumlage, Nebenforderung, Schadensersatz) | **nein** | Kein Werkzeug. Nur in der Verwaltio-Oberfläche |
+| Ratenplan zu einer Forderung | ja\* | `ratenplan_anlegen` / `ratenplan_beenden` |
+
+### 21.2 Zahlungen buchen
+
+| Vorgang | Über die Schnittstelle | Werkzeug |
+|---|---|---|
+| Mietzahlung auf Forderung (auch Teilzahlung, auch nur ein Bestandteil) | **ja**, bucht sofort | `record_payment` |
+| Fehlbuchung rückgängig | **ja** | `reopen_payment` (öffnet die ganze Forderung, Bankumsatz wird wieder frei) |
+| **Hausgeld-Zahlung ohne Bankumsatz** (bar, Verrechnung) | **nein** | `record_payment` gilt nur für Miete. Nur in der Oberfläche |
+| Hausgeld-Zahlung mit Bankumsatz | ja | über den Bankabgleich (`match_bank_transaction` / `split_bank_transaction`) |
+| Kautionseingang | ja\* | `kaution_eingang_buchen` |
+
+### 21.3 Kontoabruf (Bankumsätze holen)
+
+| Vorgang | Über die Schnittstelle |
+|---|---|
+| Kontoabruf / Bank-Synchronisation **auslösen** | **nein**, kein Werkzeug |
+| Kontoauszug-Datei (CAMT/MT940/CSV) importieren | **nein**, nur in der Oberfläche |
+| Konten, Saldo, letzten Abruf lesen | ja: `get_bank_accounts` (einzige Stelle mit IBAN) |
+| Umsätze lesen und durchsuchen | ja: `get_bank_transactions` (Suche, Betrag, Richtung, Zeitraum, Zuordnungsstand) |
+| Kontostand bei Konten ohne Bankabruf eintragen | ja: `edit_bank_account` (`kontostand`, `kontostandAm`) |
+| Bankkonto einem Objekt zuordnen, Zahlungsfreigaben, Limits | **nein**, nur in der Oberfläche |
+
+### 21.4 Lastschriften und Einzüge (SEPA)
+
+| Vorgang | Über die Schnittstelle | Werkzeug |
+|---|---|---|
+| Mandat anlegen (Miete oder Hausgeld, CORE/B2B, Betrag, Einzugstag) | **ja** | `create_sepa_mandate`. IBAN nur wie genannt. Ohne Unterschriftsdatum entsteht ein Entwurf |
+| Mandat ändern: Status Entwurf / versandt / aktiv / pausiert, neue Bankverbindung, Betrag, Einzugstag, Laufzeit | **ja** | `edit_sepa_mandate`. Aktivieren braucht ein Unterschriftsdatum |
+| Übernommenes Mandat (Vorverwaltung) | ja | `letzterEinzugExtern` setzen |
+| Mandat **widerrufen** | **nein** | eigener Schritt in der Oberfläche |
+| **Lastschrift-Einzug / Sammeleinzug erzeugen oder ausführen** (SEPA-XML, Bankeinreichung) | **nein** | kein Werkzeug, nur in der Oberfläche |
+| Gutschrift eines eigenen Sammeleinzugs auf die Einzelforderungen verteilen | **ja** | `split_bank_transaction` mit `sammeleinzugId`. Bei Abweichungen wird nichts gebucht |
+| Rücklastschrift erfassen | **nein**, kein eigenes Werkzeug | in der Oberfläche. `reopen_payment` öffnet nur die Forderung wieder |
+
+### 21.5 Bankabgleich
+
+| Vorgang | Über die Schnittstelle | Werkzeug |
+|---|---|---|
+| Offene, nicht zugeordnete Umsätze mit Vorschlag | ja | `get_unmatched_transactions` |
+| Eingang einer Forderung zuordnen | **ja**, bucht sofort | `match_bank_transaction`. **Nur wenn Name oder IBAN der Person im Umsatz stehen. Ein gleicher Betrag allein reicht nicht und wird abgelehnt** |
+| Eine Gutschrift auf mehrere Forderungen aufteilen (mehrere Monate, Miete + Hausgeld + Sonderumlage) | **ja**, bucht sofort | `split_bank_transaction` (Summe = Umsatz, je Teil ein Nachweis) |
+| Ausgang als Beleg buchen und zuordnen | **ja**, bucht sofort | `book_transaction_as_expense` (bis 50 auf einmal) |
+| Regeln für die automatische Vorkontierung | ja | `vorkontierungsregel_anlegen` / `_aendern`. Nach Verwendungszweck, Gegenseite, IBAN, Mandatsreferenz, Betrag; nur Vorschlag oder automatisch buchen. **Wirkt auch rückwirkend auf offene Umsätze** |
+| Umsatz ignorieren, Zuordnung von Hand ohne Nachweis | **nein** | Bankabgleich in der Oberfläche |
+
+### 21.6 Buchhaltung
+
+| Vorgang | Über die Schnittstelle | Werkzeug |
+|---|---|---|
+| Journal, Kontoblatt, Summen- und Saldenliste, Personenkonto | ja | `get_journal`, `get_kontoblatt`, `get_summen_salden`\*, `get_account_statement`\*, `get_tenant_account`\* |
+| Eingangsrechnung erfassen | ja, zweistufig | `create_expense` (Entwurf in der Belegfreigabe, zeigt die Verteilung auf Einheiten) → `confirm_expense` (bis 50 Belege nach einer Freigabe). Dublettenprüfung |
+| Beleg ändern | ja | `edit_expense`. Nach Festschreibung / DATEV nur mit Grund (Gegenbuchung und Neubuchung) |
+| Buchung ändern / aufheben | ja, offene Periode vor DATEV | `edit_booking` / `cancel_booking` (immer mit Grund in deinen Worten) |
+| **Freie Buchung anlegen** (Umbuchung Soll an Haben, Abgrenzung, Rücklagenumbuchung) | **nein** | kein Werkzeug, nur in der Oberfläche |
+| Storno nach DATEV-Übergabe / in festgeschriebener Periode | **nein** | Oberfläche |
+| Konten, Umlageschlüssel, Kontenrahmen | ja | `create_account`\*, `edit_account`\*, `create_verteilerschluessel`\*, `switch_kontenrahmen`\* |
+| DATEV-Status | ja (lesen) | `get_datev_status` |
+| DATEV-Übertragung / -Export auslösen | **nein** | Oberfläche |
+
+### 21.7 Live-Befund Finanzen, WEG Queller Str. 72 (02.11.2026)
+
+- **Bankkonto:** 1 Girokonto „WEG Queller Str.72“ mit **ausländischer (französischer) IBAN**. Das passt zu TOP 3 der ETV vom 28.09.2026, „Eröffnung eines neuen deutschen Kontos“, über den kein Beschluss erfasst ist. Saldo laut Verwaltio 17.469,00 €.
+- **Letzter Kontoabruf: 06.10.2026.** Das Konto ist als „Kontostand eintragbar“ geführt, also ohne automatischen Bankabruf (manuell oder per Import). Seit knapp 4 Wochen sind keine neuen Umsätze eingegangen.
+- **Bankabgleich:** 65 Umsätze, alle 65 zugeordnet. Nichts offen.
+- **Sollstellungen:** Hausgeld ist bis einschließlich 12/2026 gebucht (Bewirtschaftung + Erhaltungsrücklage je Einheit). Soll 10.099,44 €, Ist 8.411,50 €, offen 1.687,94 € (davon 841,62 € Dezember, noch nicht fällig).
+- **Überfälliger Hausgeld-Rückstand 846,32 €**, nachgerechnet:
+  - Hausgeld November 2026, fällig 01.11.2026, für alle 4 Einheiten: 207,89 + 169,19 + 201,26 + 263,28 = **841,62 €**. Ob gezahlt wurde, ist unbekannt, weil der Kontoabruf seit 06.10. fehlt.
+  - Cent-Differenzen Januar bis Oktober 2026: WE 04 (Melchers) 10 × 0,28 € = **2,80 €**, WE 02 (Goertzen) 10 × 0,19 € = **1,90 €**. Wahrscheinlich zahlen diese Eigentümer per Dauerauftrag einen gerundeten Betrag [wahrscheinlich].
+  - Summe: 841,62 + 2,80 + 1,90 = **846,32 €** ✓
+- **Kein echter Zahlungsverzug erkennbar.** Ein Mahnlauf würde jetzt die November-Raten und Cent-Beträge anmahnen. **Vor jedem Mahnlauf zuerst den Kontoabruf nachholen.**
+- **DATEV:** eingerichtet, aber **nicht verbunden**. Kein Mandant, keine Übertragung.
