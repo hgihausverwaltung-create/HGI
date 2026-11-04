@@ -9,6 +9,7 @@ This is not a software project — there is no build system, package manifest, s
 Repository contents:
 
 - `docs/executive-master-prompt.md` — the master system prompt. It defines the persona, tone, and domain rules the AI assistant must follow when helping with WEG-Verwaltung (condominium/HOA management), Mietverwaltung (rental management), accounting, financing, and business development tasks for the company.
+- `.claude/skills/` — Claude Code skills invoked with `/<skill-name>` that encode step-by-step HGI operating procedures (e.g. `hgi-protokoll-erstellung` for finalizing, sending, and following up on Eigentümerversammlung protocols). These complement the master prompt with process checklists rather than persona/behavioral rules.
 
 There are no commands to build, lint, or test — work in this repo consists of editing and extending the prompt document(s).
 
